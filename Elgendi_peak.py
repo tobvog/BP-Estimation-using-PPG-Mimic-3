@@ -1,131 +1,118 @@
 import numpy as np
-
-
+from scipy.signal import argrelextrema
+ 
 class ElgPeakDetection:
-    
-    def __init__(self, pleth, abp, w1_size=111, w2_size=667, fs=125, a=0.02, hampel_window=3):
-        self.data = pleth
+    def __init__(self, data, abp, w1_size=111, w2_size=667, fs=125, a=0.02, hampel_window=3):
+        self.data = data
         self.abp = abp
-        self.w1 = int(self.w1_size*self.fs*10**(-3)) 
-        self.w2 = int(self.w2_size*self.fs*10**(-3))
         self.fs = fs
         self.a = a
         self.hampel_window = hampel_window
+        self.w1 = int(w1_size*fs*10**(-3))
+        self.w2 = int(w2_size*fs*10**(-3))
 ###############################################################################
 ###############################################################################
-###############################################################################
+###############################################################################   
     def squaring(self):
         result = []
-        for sub in range(0, len(self.data)):
-            temp_sub = []
-            for sample in range(0, len(self.data[sub])):
-                if self.data[sub][sample] >= 0:
-                    temp = self.data[sub][sample]**2
-                else:
-                    temp = 0
-                temp_sub.append(temp)
-            result.append(temp_sub)
-
-        result = np.array(result, dtype=object)
-        
-        return result
-###############################################################################
-###############################################################################
-###############################################################################  
-    def moving_average(self, data, window):
-        l = int(window/2)
-        
-        result = []
-        for sub in range(0, len(data)):
-            temp_sub = []
-            print("Subject Nr.: "+str(sub+1))
-            for sample in range(l+1, len(data[sub])-l):
-                mean = np.mean(data[sub][sample-l:sample+l])
-                temp_sub.append(mean)    
-            result.append(temp_sub)
+        for sample in range(0, len(self.data)):
+            if self.data[sample] >= 0:
+                temp = self.data[sample]**2
+            else:
+                temp = 0
+            result.append(temp)
             
-        np.array(result, dtype=object)
+        return np.array(result, dtype=object)        
+###############################################################################
+###############################################################################
+###############################################################################    
+    def moving_average(self, data, window):
+        if window == "w1":
+            l = int(self.w1/2)
+        elif window == "w2":
+            l = int(self.w2/2)
+        
+        result = [] 
+        for sample in range(l+1, len(data)-l):
+            mean = np.mean(data[sample-l:sample+l])
+            result.append(mean) 
+        
+        result = np.array(result, dtype=object)
         
         return result, l
 ###############################################################################
 ###############################################################################
-###############################################################################     
-    def correct_length(pleth, abp, ma_peak, l_w1, l_w2):
-        pleth_mod, ma_peak_mod, abp_mod = [], [], []
-        for sub in range(0,len(pleth)):
-            size_pleth = len(pleth[sub])
-            size_ma_peak = len(ma_peak[sub])
-            size_abp = len(abp[sub])
-            
-            pleth_mod.append(pleth[sub][l_w2:size_pleth-l_w2])
-            ma_peak_mod.append(ma_peak[sub][l_w2-l_w1:size_ma_peak-l_w2+l_w1])
-            abp_mod.append(abp[sub][l_w2-l_w1:size_abp-l_w2+l_w1])
-            
-        return pleth_mod, abp_mod, ma_peak_mod
+###############################################################################        
+    def correct_length(self, square, ma_peak, l_w1, l_w2):
+        size_pleth = len(self.data)
+        size_ma_peak = len(ma_peak)
+        size_abp = len(self.abp)
+        size_square = len(square)
+        
+        pleth_mod = self.data[l_w2:size_pleth-l_w2].to_numpy()
+        ma_peak_mod = ma_peak[l_w2-l_w1:size_ma_peak-l_w2+l_w1]
+        abp_mod = self.abp[l_w2-l_w1:size_abp-l_w2+l_w1]
+        square_mod = square[l_w2:size_square-l_w2].to_numpy()
+        
+        return pleth_mod, abp_mod, ma_peak_mod, square_mod       
 ###############################################################################
 ###############################################################################
-###############################################################################       
+###############################################################################   
     def boi(self, data, ma_peak, ma_beat):
-        boi = []
-        for sub in range(0, len(data)):
-            z = np.mean(data[sub])
-            temp_sub = []
-            ma_diff = int((len(ma_peak[sub])-len(ma_beat[sub]))/2)
-            print("Subject Nr.: "+str(sub+1))
-            
-            for sample in range(ma_diff, len(ma_peak[sub])-ma_diff):
-                alpha = self.a*z
-                thr1 = ma_beat[sub][sample-ma_diff-1]+alpha
-                if ma_peak[sub][sample] > thr1:
-                    temp_sub.append(0.1)
-                else:
-                    temp_sub.append(0)
-            
-            boi.append(temp_sub)
-        result = np.array(boi, dtype=object)
-        
-        return result
+        z = np.mean(data)
+        result = []
+        ma_diff = int((len(ma_peak)-len(ma_beat))/2)
+        for sample in range(ma_diff, len(ma_peak)-ma_diff):
+            alpha = self.a*z
+            thr1 = ma_beat[sample-ma_diff-1]+alpha
+            if ma_peak[sample] > thr1:
+                result.append(0.1)
+            else:
+                result.append(0)
+                
+        return np.array(result, dtype=object)        
 ###############################################################################
 ###############################################################################
-###############################################################################    
+###############################################################################      
     def boi_onset_offset(self, boi, data):
-        blocks = []
-        w1 = int(self.wboi_size1*self.fs*10**(-3))   # 111 = w_size1     -> in ms
-        #l_w1 = int(w1/2)
-        #w2 = int(self.wboi_size2*self.fs*10**(-3))
-        #l_w2 = int(w2/2)
-        thr2 = w1
-        peak_all = []
-        for sub in range(0, len(boi)):
-            size = len(data[sub])-len(boi[sub])
-            data_temp = data[sub][size:] 
-            
-            print("Subject Nr.: "+str(sub+1))
-            temp_sub, temp_peak = [], []
-            x1, x2 = "x", "x"
-            for sample in range(0, len(boi[sub])-1):
-                if boi[sub][sample] == 0 and boi[sub][sample+1] == 0.1:
-                    x1 = sample+1 
-                                
-                if boi[sub][sample] == 0.1 and boi[sub][sample-1] == 0.1:
-                    x2 = sample
-                    
-                if x1 != "x" and x2 != "x" and x2-x1 > thr2:
-                    if x2-x1 > thr2:
-                        temp = data_temp[x1:x2]
-                        max_idx = np.argmax(temp)
-                        temp_peak.append(max_idx+x1)
-                                       
-                        temp_sub.append([x1, x2])
-                        x1, x2 = "x", "x"
-                    
-            blocks.append(temp_sub)
-            peak_all.append(temp_peak)
-            
-        blocks = np.array(blocks, dtype=object)    
-        peak_all = np.array(peak_all, dtype=object)
+        def find_nearest(array, value):
+            a = list(array)
+            return min(range(len(a)), key=lambda i: abs(a[i]- value))
         
-        return peak_all, blocks
+        thr2 = self.w1
+        print(thr2)
+        stat = True
+        result, peaks = [], []
+        min_idx = np.squeeze(np.array(argrelextrema(data, np.less)))
+        
+        for sample in range(0, len(boi)-1):
+            if boi[sample] == 0 and boi[sample+1] == 0.1 and stat == True:
+                idx_nearest = find_nearest(min_idx, sample+1)
+                if min_idx[idx_nearest] < sample+1:
+                    if idx_nearest+1 <   len(min_idx):
+                        x1 = min_idx[idx_nearest]
+                        x2 = min_idx[idx_nearest+1]
+                        stat = False
+                    else:
+                        break
+                else:
+                    x1 = min_idx[idx_nearest-1]
+                    x2 = min_idx[idx_nearest]
+                    stat = False
+
+                
+            if stat == False:              
+                if x2-x1 > thr2:
+                    temp = data[x1:x2]
+                    max_idx = np.argmax(temp)
+                    peaks.append(max_idx+x1)
+                               
+                    result.append([x1, x2])
+                    stat = True
+                else:
+                    stat = True
+                         
+        return np.array(result, dtype=object), np.array(peaks, dtype=object)
 ###############################################################################
 ###############################################################################
 ###############################################################################   
@@ -135,21 +122,10 @@ class ElgPeakDetection:
         ma_peak, l_w1 = self.moving_average(data_square, self.w1)
         ma_beat, l_w2 = self.moving_average(data_square, self.w2)
         
-        data_square_mod, ma_peak_mod, abp_mod = self.correct_length(self.abp, ma_peak, l_w1, l_w2)
+        data_square_mod, ma_peak_mod, abp_mod = self.correct_length(self.data, self.abp, ma_peak, l_w1, l_w2)
         
         boi = self.boi(data_square_mod, ma_peak_mod, ma_beat)
         
         idx_blocks, idx_peaks = self.boi_onset_offset(boi, data_square_mod)
         
-        return idx_blocks, idx_peaks
-        
-                
-    
-    
-    
-    
-    
-    
-    
-    
-    
+        return idx_blocks, idx_peaks, abp_mod
