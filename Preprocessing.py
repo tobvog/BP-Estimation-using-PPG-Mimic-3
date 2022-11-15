@@ -63,112 +63,7 @@ class Preprocessing_mimic3:
         return result
 ###############################################################################
 ###############################################################################
-############################################################################### 
-    # def detect_flat(self, pleth, abp, edge_flat=0.1, edge_peak=0.05):
-    #     abp_flat_lines, abp_flat_peaks = [], []
-
-    #     for sub in range(0,len(abp)):
-    #         print("Subject number: "+str(sub+1))
-    #         data = abp[sub]
-    #         sub_flat_lines, sub_flat_peaks = [], []
-            
-    #         for cycle in range(0, len(data)):
-    #             temp_lines, temp_peak = [], []
-    #             for sample in range(0, len(data[cycle])):
-    #                 #print(str(cycle)+"_"+str(sample))
-    #                 data_max = argrelextrema(data[cycle], np.greater)
-    #                 if sample in data_max[0]:   
-    #                     temp_lines.append(False)
-    #                     if sample == len(data[cycle])-3:
-    #                         if data[cycle][sample] == data[cycle][sample+1] and data[cycle][sample] == data[cycle][sample+2] and data[cycle][sample] == data[cycle][sample-1] :
-    #                             temp_peak.append(True)
-    #                             temp_lines.append(True)
-    #                             break
-    #                         # else:
-    #                         #     temp_peak.append(False)
-    #                         #     temp_lines.append(False)                                
-    #                     elif sample == len(data[cycle])-2:
-    #                         if data[cycle][sample] == data[cycle][sample+1] and data[cycle][sample] == data[cycle][sample-1] and data[cycle][sample] == data[cycle][sample-2]:
-    #                             temp_peak.append(True)
-    #                             temp_lines.append(True)
-    #                             break
-    #                         # else:
-    #                         #     temp_peak.append(False)
-    #                         #     temp_lines.append(False)
-    #                     elif sample == len(data[cycle])-1:
-    #                         if data[cycle][sample] == data[cycle][sample-1] and data[cycle][sample] == data[cycle][sample-2] and data[cycle][sample] == data[cycle][sample-3]:
-    #                             temp_peak.append(True)
-    #                             temp_lines.append(True)
-    #                             break
-    #                         # else:
-    #                         #     temp_peak.append(False)  
-    #                         #     temp_lines.append(False)
-    #                     else:
-    #                         if data[cycle][sample] == data[cycle][sample+1] and data[cycle][sample] == data[cycle][sample+2] and data[cycle][sample] == data[cycle][sample+3]:
-    #                             temp_peak.append(True)
-    #                             temp_lines.append(True)
-    #                             break
-    #                         # else:
-    #                         #     temp_peak.append(False)
-    #                         #     temp_lines.append(False)
-    #                 else:
-    #                     temp_peak.append(False)
-    #                     if sample == len(data[cycle])-3:
-    #                         if data[cycle][sample] == data[cycle][sample+1] and data[cycle][sample] == data[cycle][sample+2] and data[cycle][sample] == data[cycle][sample-1]:
-    #                             temp_lines.append(True)
-    #                             break
-    #                         # else:
-    #                         #     temp_lines.append(False)
-    #                     elif sample == len(data[cycle])-2:
-    #                         if data[cycle][sample] == data[cycle][sample+1] and data[cycle][sample] == data[cycle][sample-1] and data[cycle][sample] == data[cycle][sample-2]:
-    #                             temp_lines.append(True)
-    #                             break
-    #                         # else:
-    #                         #     temp_lines.append(False)  
-    #                     elif sample == len(data[cycle])-1:
-    #                         if data[cycle][sample] == data[cycle][sample-1] and data[cycle][sample] == data[cycle][sample-2] and data[cycle][sample] == data[cycle][sample-3]:
-    #                             temp_lines.append(True)
-    #                             break
-    #                         # else:
-    #                         #     temp_lines.append(False)        
-    #                     else:
-    #                         if data[cycle][sample] == data[cycle][sample+1] and data[cycle][sample] == data[cycle][sample+2] and data[cycle][sample] == data[cycle][sample+3]:
-    #                             temp_lines.append(True)
-    #                             break
-    #                         # else:
-    #                         #     temp_lines.append(False)
-    #             number_of_bvalue_peak_sub, number_of_bvalue_line_sub = [], []   
-    #             sub_flat_lines.append(temp_lines)
-    #             sub_flat_peaks.append(temp_peak)
-    #             number_of_bvalue_peak_sub.append(sub_flat_lines.count(True)/len(sub_flat_lines))
-    #             number_of_bvalue_line_sub.append(sub_flat_peaks.count(True)/len(sub_flat_peaks))
-                
-    #             checklist_lines, checklist_peak = [], []
-                
-    #             if sub_flat_lines.count(True)/len(sub_flat_lines) > edge_flat:
-    #                 checklist_lines.append(False)
-    #             else:
-    #                 checklist_lines.append(True)  
-                    
-                    
-    #             if sub_flat_peaks.count(True)/len(sub_flat_peaks) > edge_peak:
-    #                 checklist_peak.append(False)
-    #             else:
-    #                 checklist_peak.append(True)  
-                    
-    #         abp_flat_peaks.append(checklist_lines)        
-    #         abp_flat_lines.append(sub_flat_peaks)
-        
-    #     result_pleth, result_abp = [], []
-    #     for sub in range(0, len(pleth)):
-    #         if abp_flat_lines[sub] == True and abp_flat_peaks[sub] == True:
-    #             result_pleth.append(pleth[sub])
-    #             result_abp.append(abp[sub])
-
-    #     return np.array(result_pleth, dtype=object), np.array(result_abp)
-    
-### RIGHT  FUNCTION
-    
+###############################################################################     
 def detect_flat(pleth, abp, edge_lines=0.1, edge_peaks=0.05):
     flat_lines, flat_peaks, max_list = [], [], []
     
@@ -221,8 +116,6 @@ def detect_flat(pleth, abp, edge_lines=0.1, edge_peaks=0.05):
     else:
         passed = True
             
-
-
     return passed, fquote_lines, fquote_peaks
 ###############################################################################
 ###############################################################################
