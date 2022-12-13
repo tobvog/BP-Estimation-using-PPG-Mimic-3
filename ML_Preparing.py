@@ -8,12 +8,11 @@ import numpy as np
 from scipy.signal import argrelextrema, welch
 from scipy.stats import entropy, skew, kurtosis
 #%%
-
-class ML_Preparing:
-    
-    def __init__(self, pleth, abp, fs):
+class ML_Preparing:   
+    def __init__(self, pleth, abp, target_path, fs=125 ):
         self.pleth = pleth
         self.abp = abp
+        self.target_path = target_path
         self.fs = fs
 ###############################################################################
 ###############################################################################
@@ -34,7 +33,7 @@ class ML_Preparing:
             dev1.append(temp_sub1)
             dev2.append(temp_sub2)
             
-        return np.array(dev1, dtype=object), np.array(dev2, dtype=object)
+        return np.array(dev1, dtype=object), np.array(dev2, dtype=object)    
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -166,32 +165,82 @@ class ML_Preparing:
 ###############################################################################
 ###############################################################################
 ###############################################################################    
-    def extract_sbp_dbp(self):
-        result = []
-        for sub in range(0, len(self.abp)):
+    def extract_sbp_dbp(self, abp, idx_sbp, idx_dbp):       
+        def loc_extrem(data, n):
+            loc_max = np.sort(argrelextrema(data, np.greater))
+            loc_min = np.sort(argrelextrema(data, np.less))
+            
+            if len(loc_max[0]) > n:
+                sbp = np.mean(data[loc_max[0, -n:]])
+            else:
+                sbp = np.mean(data[loc_max[0]]) 
+            if len(loc_min[0]) > n:
+                dbp = np.mean(data[loc_min[0, -n:]])
+            else:
+                dbp = np.mean(data[loc_min[0]])
+            
+            return sbp, dbp
+               
+        result_nn, result_ml = [], []
+        for sub in range(0, len(peak_idx)):
             #print(sub)
-            subject = []
-            for cyc in range(0, len(self.abp[sub])):
+            subject_nn, subject_ml = [], []
+            for idx in (peak_idx[sub]):
                 #print(cyc)
-                temp = self.abp[sub][cyc]
-                sbp = max(temp)        
-                '''
-                idx_sbp = np.squeeze(np.where(temp == sbp))
-                try:
-                    dbp = min(temp[idx_sbp:])
-                except:
-                    dbp = min(temp[idx_sbp[0]:])
-                '''    
-                dbp = min(temp)
+                temp_nn = abp[sub][int(idx-self.fs*2.5):int(idx+self.fs*2.5)]
+                temp_ml = abp[sub][int(idx-self.fs):int(idx+self.fs)]
                 
-                subject.append([sbp, dbp])
-            result.append(subject)
+                sbp_nn, dbp_nn = loc_extrem(temp_nn, 5)
+                sbp_ml, dbp_ml = loc_extrem(temp_ml, 2)
+                
+                subject_nn.append([sbp_nn, dbp_nn])
+                subject_ml.append([sbp_ml, dbp_ml])
+            result_nn.append(subject_nn)
+            result_ml.append(subject_ml)
 
-        return np.array(result, dtype=object)
- ###############################################################################
- ###############################################################################
- ###############################################################################     
+        return np.array(result_nn, dtype=object), np.array(result_ml, dtype=object)
+###############################################################################
+###############################################################################
+###############################################################################     
+# def get_segments(self, path):
+#     result = []
+#     for extra in self.files_raw:
+#         input_ = np.load(path+extra, allow_pickle=True)
+#         pleth = input_[1, 1]
+#         # Only for testing
+#         data[np.isnan(data)] = 0
 
+#         seg_length = 5*self.fs
+
+#         temp = []
+#         for seg in range(0, len(data), seg_length):
+#             temp.append(data[seg_length-seg:seg])
+
+#         result.append(temp)
+#     return np.array(result)
+###############################################################################
+###############################################################################
+###############################################################################   
+    def reconstruct_data(self):
+        re_pleth, re_abp, all_peak_idx = [], [], []
+    
+        for sub in range(0, len(self.pleth)):
+            print("Subject ",sub+1," of ",len(self.pleth)) 
+            temp_pleth, temp_abp, temp_idx = np.array([]), np.array([]), np.array([[]])
+            for cyc in range(0, len(self.pleth[sub])):
+                cycle_abp = self.abp[sub][cyc]
+                cycle_pleth = self.pleth[sub][cyc]
+                peak_idx = np.squeeze(np.where(cycle_pleth == max(cycle_pleth)))+len(temp_pleth)
+    
+                temp_abp = np.append(temp_abp, cycle_abp)
+                temp_pleth = np.append(temp_pleth, cycle_pleth)
+                temp_idx = np.append(temp_idx, peak_idx)
+            
+            re_abp.append(temp_abp)
+            re_pleth.append(temp_pleth)
+            all_peak_idx.append(temp_idx)
+            
+        return np.array(re_pleth, dtype=object), np.array(re_abp, dtype=object), np.array(all_peak_idx, dtype=object)
         
         
         

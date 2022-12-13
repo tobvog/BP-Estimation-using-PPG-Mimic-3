@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.signal import argrelextrema
+from scipy.signal import argrelextrema, butter, sosfiltfilt
+
  
 class ElgPeakDetection:
     def __init__(self, data, abp, w1_size=111, w2_size=667, fs=125, a=0.02, hampel_window=3):
@@ -12,17 +13,34 @@ class ElgPeakDetection:
         self.w2 = int(w2_size*fs*10**(-3))
 ###############################################################################
 ###############################################################################
+###############################################################################
+    @staticmethod 
+    def filt_freq(sos, data):
+        return sosfiltfilt(sos, data)
+###############################################################################
+###############################################################################
 ###############################################################################   
-    def squaring(self):
+    @staticmethod
+    def squaring(data):
         result = []
-        for sample in range(0, len(self.data)):
-            if self.data[sample] >= 0:
-                temp = self.data[sample]**2
+        for sample in range(0, len(data)):
+            if data[sample] >= 0:
+                temp = data[sample]**2
             else:
                 temp = 0
             result.append(temp)
             
-        return np.array(result, dtype=object)        
+        return np.array(result, dtype=object)  
+###############################################################################
+###############################################################################
+############################################################################### 
+    def design_filt(self, lowcut=0.5, highcut=8, order=4):
+        nyq = 0.5 * self.fs
+        low = lowcut / nyq
+        high = highcut / nyq
+        sos = butter(order, [low, high], btype='band', output="sos") 
+        
+        return sos      
 ###############################################################################
 ###############################################################################
 ###############################################################################    
@@ -43,7 +61,7 @@ class ElgPeakDetection:
 ###############################################################################
 ###############################################################################
 ###############################################################################        
-    def correct_length(self, square, ma_peak, l_w1, l_w2):
+    def correct_length1(self, square, ma_peak, l_w1, l_w2):
         size_pleth = len(self.data)
         size_ma_peak = len(ma_peak)
         size_abp = len(self.abp)
@@ -55,6 +73,19 @@ class ElgPeakDetection:
         square_mod = square[l_w2:size_square-l_w2].to_numpy()
         
         return pleth_mod, abp_mod, ma_peak_mod, square_mod       
+###############################################################################
+###############################################################################
+###############################################################################        
+    def correct_length2(self, square, ma_peak, l_w1, l_w2):
+        size_ma_peak = len(ma_peak)
+        size_data = len(self.data)
+        size_square = len(square)
+        
+        data_mod = self.data[l_w2:size_data-l_w2]
+        ma_peak_mod = ma_peak[l_w2-l_w1:size_ma_peak-l_w2+l_w1]
+        square_mod = square[l_w2:size_square-l_w2]
+        
+        return data_mod, ma_peak_mod, square_mod     
 ###############################################################################
 ###############################################################################
 ###############################################################################   
@@ -77,10 +108,12 @@ class ElgPeakDetection:
     def boi_onset_offset(self, boi, data):
         def find_nearest(array, value):
             a = list(array)
-            return min(range(len(a)), key=lambda i: abs(a[i]- value))
-        
+            try:
+                return min(range(len(a)), key=lambda i: abs(a[i]- value))
+            except:
+                return 0
+               
         thr2 = self.w1
-        print(thr2)
         stat = True
         result, peaks = [], []
         min_idx = np.squeeze(np.array(argrelextrema(data, np.less)))

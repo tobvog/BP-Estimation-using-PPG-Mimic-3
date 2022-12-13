@@ -116,11 +116,11 @@ def detect_flat(pleth, abp, edge_lines=0.1, edge_peaks=0.05):
     else:
         passed = True
             
-    return passed, fquote_lines, fquote_peaks
+    return [passed, fquote_lines, fquote_peaks]
 ###############################################################################
 ###############################################################################
 ###############################################################################   
-    def segment_cycles(self, pleth, abp, block_idx):
+    def segment_cycles(self, pleth, abp, block_idx):  # Change to: get_cycles
               
         # l_diff = len(pleth)-len(abp)
         # abp_new = pleth[int(l_diff/2):int(len(abp)-l_diff/2)]
