@@ -2,14 +2,19 @@ import numpy as np
 import pandas as pd
 
 from hampel import hampel
-from scipy.signal import argrelextrema, butter, sosfiltfilt
+from scipy.signal import argrelextrema, butter, sosfiltfilt, medfilt
 
 class Preprocessing_mimic3:
-    def __init__(self, data):
+    def __init__(self, data, sos):
         self.pleth = data[0,1]
         self.abp = data[1,1]
-        self.fs = data[0,2]
-        
+        self.fs = data[0,2]   
+        self.sos = sos
+###############################################################################
+###############################################################################
+###############################################################################
+    def get_obj(self):
+        return self.pleth, self.abp, self.fs
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -18,27 +23,25 @@ class Preprocessing_mimic3:
         low = lowcut / nyq
         high = highcut / nyq
         sos = butter(order, [low, high], btype='band', output="sos") 
-        
         return sos
 ###############################################################################
 ###############################################################################
 ###############################################################################
-    def filt_freq(cls, data, sos):
-        return sosfiltfilt(sos, data)
+    def filt_freq(cls):
+        cls.pleth = sosfiltfilt(cls.sos, cls.pleth)
 ###############################################################################
 ###############################################################################
 ###############################################################################
-    def scaling(self, data):
-        mean = np.nanmean(data)
-        var = np.nanvar(data)
-        result = (data-mean)/var
+    def scaling(cls):
+        mean = np.nanmean(cls.pleth)
+        std = np.nanstd(cls.pleth)
+        cls.pleth = (cls.pleth-mean)/std
        
-        return result        
 ###############################################################################
 ###############################################################################
 ###############################################################################  
-    def change_nan(self):
-        data = self.pleth
+    def change_nan(cls):
+        data = cls.pleth
         result = data
         
         for i in range(0,len(data)):
@@ -51,8 +54,7 @@ class Preprocessing_mimic3:
                 
             elif np.isnan(data[i]) == True and np.isnan(data[i+1]) == True and np.isnan(data[i+2]) == True:
                 result[i] = 0
-                
-        return result       
+        cls.pleth = data
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -61,6 +63,11 @@ class Preprocessing_mimic3:
         result  = hampel(df, hampel_window, n=3, imputation=True)
         
         return result
+###############################################################################
+###############################################################################
+###############################################################################
+    def filt_median(cls, k_size=3):
+        cls.pleth = medfilt(cls.pleth, k_size)
 ###############################################################################
 ###############################################################################
 ###############################################################################     
