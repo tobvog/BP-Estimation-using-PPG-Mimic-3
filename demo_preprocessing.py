@@ -10,8 +10,7 @@ from Elgendi_peak import ElgPeakDetection
 from Preprocessing import Preprocessing_mimic3
 
 # functions
-def design_filt(lowcut=0.5, highcut=8, order=4):
-    fs = 125
+def design_filt(fs=125, lowcut=0.5, highcut=8, order=4):
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
@@ -30,6 +29,7 @@ sos = design_filt()
 for i in range(0,nr_sub):
     print('Loading File Number: '+str(i+1))
     data = np.load(path+files[i], allow_pickle=True)
+    data_mod = [data[0,1], data[1,1], data[0,2]]
     
     preprocess = Preprocessing_mimic3(data, sos)
     print("Step 1/4: change_nan")

@@ -6,10 +6,19 @@ from scipy.signal import argrelextrema, butter, sosfiltfilt, medfilt
 
 class Preprocessing_mimic3:
     def __init__(self, data, sos):
+        self.pleth = data[0]
+        self.abp =data[1]
+        self.fs = data[2]
+        self.sos = sos
+        
+        '''
+        Muss verallgemeinert werden
+        
         self.pleth = data[0,1]
         self.abp = data[1,1]
         self.fs = data[0,2]   
         self.sos = sos
+        '''
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -71,80 +80,80 @@ class Preprocessing_mimic3:
 ###############################################################################
 ###############################################################################
 ###############################################################################     
-def detect_flat(pleth, abp, edge_lines=0.1, edge_peaks=0.05):
-    flat_lines, flat_peaks, max_list = [], [], []
+    def detect_flat(self, data, edge_lines=0.1, edge_peaks=0.05):
+        flat_lines, flat_peaks = [], []
+        
+        for cycle in range(0, len(data)):
+            temp_lines, temp_peaks = [], []
+            data_max = argrelextrema(data[cycle], np.greater)
+            #pleth_max = argrelextrema(self.abp[cycle], np.greater)
+            #max_list.append(data_max)
     
-    for cycle in range(0, len(abp)):
-        temp_lines, temp_peaks = [], []
-        data_max = argrelextrema(abp[cycle], np.greater)
-        max_list.append(data_max)
-
-        for sample in range(0, len(abp[cycle])-2):
-            if len(data_max[0]) == 0:
-                temp_peaks.append(False)
-                temp_lines.append(True)
-                break
-            else:
-                if sample in data_max[0]:   
-                    #temp_lines.append(False)
-                    if sample == len(abp[cycle])-2:
-                        if abp[cycle][sample] == abp[cycle][sample+1] and abp[cycle][sample] == abp[cycle][sample+2]:# and abp[cycle][sample] == abp[cycle][sample-1] :
-                            temp_peaks.append(True)
-                            temp_lines.append(True)
-                            break          
-        
-                    if sample < len(abp[cycle])-2:
-                        if abp[cycle][sample] == abp[cycle][sample+1] and abp[cycle][sample] == abp[cycle][sample+2]:# and abp[cycle][sample] == abp[cycle][sample+3]:
-                            temp_peaks.append(True)
-                            temp_lines.append(True)
-                            break
-        
+            for sample in range(0, len(data[cycle])-2):
+                if len(data_max[0]) == 0:
+                    temp_peaks.append(False)
+                    temp_lines.append(True)
+                    break
                 else:
-                    #temp_peaks.append(False)
-                    if sample == len(abp[cycle])-2:
-                        if abp[cycle][sample] == abp[cycle][sample+1] and abp[cycle][sample] == abp[cycle][sample+2]:# and abp[cycle][sample] == abp[cycle][sample-1]:
-                            temp_lines.append(True)
-                            break
-        
-           
-                    if sample < len(abp[cycle])-2:
-                        if abp[cycle][sample] == abp[cycle][sample+1] and abp[cycle][sample] == abp[cycle][sample+2]:# and abp[cycle][sample] == abp[cycle][sample+3]:
-                            temp_lines.append(True)
-                            break
-
-        flat_lines.append(temp_lines)
-        flat_peaks.append(temp_peaks)
-      
-    fquote_lines = flat_lines.count([True])/len(flat_lines)
-    fquote_peaks = flat_peaks.count([True])/len(flat_peaks)
-
-    if fquote_lines > edge_lines or fquote_peaks > edge_peaks:
-        passed = False
-    else:
-        passed = True
+                    if sample in data_max[0]:   
+                        #temp_lines.append(False)
+                        if sample == len(data[cycle])-2:
+                            if data[cycle][sample] == data[cycle][sample+1] and data[cycle][sample] == data[cycle][sample+2]:# and abp[cycle][sample] == abp[cycle][sample-1] :
+                                temp_peaks.append(True)
+                                temp_lines.append(True)
+                                break          
             
-    return [passed, fquote_lines, fquote_peaks]
-###############################################################################
-###############################################################################
-###############################################################################   
-    def segment_cycles(self, pleth, abp, block_idx):  # Change to: get_cycles
-              
-        # l_diff = len(pleth)-len(abp)
-        # abp_new = pleth[int(l_diff/2):int(len(abp)-l_diff/2)]
-        
-        cycle, label = [], []
-        for i in range(0, len(block_idx), 2):
-            if i == len(block_idx)-1:
-                break
-            else:
-                idx_start = int(block_idx[i,0])
-                idx_end = int(block_idx[i,1])
-                temp_x = pleth[idx_start:idx_end]
-                temp_y = abp[idx_start:idx_end]
-                cycle.append(temp_x)
-                label.append(temp_y)
+                        if sample < len(data[cycle])-2:
+                            if data[cycle][sample] == data[cycle][sample+1] and data[cycle][sample] == data[cycle][sample+2]:# and abp[cycle][sample] == abp[cycle][sample+3]:
+                                temp_peaks.append(True)
+                                temp_lines.append(True)
+                                break
+            
+                    else:
+                        #temp_peaks.append(False)
+                        if sample == len(data[cycle])-2:
+                            if data[cycle][sample] == data[cycle][sample+1] and data[cycle][sample] == data[cycle][sample+2]:# and abp[cycle][sample] == abp[cycle][sample-1]:
+                                temp_lines.append(True)
+                                break
+            
+               
+                        if sample < len(data[cycle])-2:
+                            if data[cycle][sample] == data[cycle][sample+1] and data[cycle][sample] == data[cycle][sample+2]:# and abp[cycle][sample] == abp[cycle][sample+3]:
+                                temp_lines.append(True)
+                                break
+    
+            flat_lines.append(temp_lines)
+            flat_peaks.append(temp_peaks)
+          
+        fquote_lines = flat_lines.count([True])/len(flat_lines)
+        fquote_peaks = flat_peaks.count([True])/len(flat_peaks)
+    
+        if fquote_lines > edge_lines or fquote_peaks > edge_peaks:
+            passed = False
+        else:
+            passed = True
                 
-        return np.array(cycle, dtype=object), np.array(label, dtype=object)
+        return [passed, fquote_lines, fquote_peaks]
+###############################################################################
+###############################################################################
+###############################################################################      
+    def segment_cycles(self, peak_idx, pad):
+        
+        cycle_pleth, cycle_abp = [],[]
+        for i in range(0, len(peak_idx), 2):
+            temp_cyc1 = self.pleth[peak_idx[i]-pad[0]:peak_idx[i]]
+            temp_cyc2 = self.pleth[peak_idx[i]:peak_idx[i]+pad[1]] 
+            try:
+                min1 = np.where(temp_cyc1==temp_cyc1.min())
+                min2 = np.where(temp_cyc2==temp_cyc2.min())
+                #print(min1[0][0])
+                #print(min2[0][0])
+                cycle_pleth.append(self.pleth[min1[0][0]:min2[0][-1]])
+                cycle_abp.append(self.abp[min1[0][0]:min2[0][-1]])
+            except:
+                continue
+            
+        return np.array(cycle_pleth, dtype=object), np.array(cycle_abp, dtype=object)
 ###############################################################################
 ###############################################################################
 ###############################################################################        
