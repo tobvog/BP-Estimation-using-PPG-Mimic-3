@@ -9,7 +9,7 @@ from scipy.signal import argrelextrema, welch
 from scipy.stats import entropy, skew, kurtosis
 #%%
 class ML_Preparing:   
-    def __init__(self, pleth, abp, target_path, fs=125 ):
+    def __init__(self, pleth, abp, target_path, fs=125):
         self.pleth = pleth
         self.abp = abp
         self.target_path = target_path

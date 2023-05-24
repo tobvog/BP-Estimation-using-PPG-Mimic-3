@@ -1,6 +1,4 @@
 import numpy as np
-from scipy.signal import argrelextrema
-import matplotlib.pyplot as plt
 
  
 class ElgPeakDetection:
@@ -9,7 +7,6 @@ class ElgPeakDetection:
         self.abp = data[1]
         self.fs = data[2]
         self.a = a
-        self.hampel_window = hampel_window
         self.w1 = int(w1_size*self.fs*10**(-3))
         self.w2 = int(w2_size*self.fs*10**(-3))
         self.pleth_squared = self.squaring(self.pleth)
@@ -60,20 +57,7 @@ class ElgPeakDetection:
         abp_mod = self.abp[l_w2-l_w1:size_abp-l_w2+l_w1]
         square_mod = self.pleth_squared[l_w2:size_square-l_w2]
         
-        return pleth_mod, abp_mod, ma_peak_mod, square_mod       
-###############################################################################
-###############################################################################
-###############################################################################        
-    def correct_length2(self, square, ma_peak, l_w1, l_w2):
-        size_ma_peak = len(ma_peak)
-        size_data = len(self.data)
-        size_square = len(square)
-        
-        data_mod = self.data[l_w2:size_data-l_w2]
-        ma_peak_mod = ma_peak[l_w2-l_w1:size_ma_peak-l_w2+l_w1]
-        square_mod = square[l_w2:size_square-l_w2]
-        
-        return data_mod, ma_peak_mod, square_mod     
+        return pleth_mod, abp_mod, ma_peak_mod, square_mod    
 ###############################################################################
 ###############################################################################
 ###############################################################################   
