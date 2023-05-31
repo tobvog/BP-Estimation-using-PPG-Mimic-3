@@ -108,6 +108,13 @@ class Preprocessing_mimic3:
                         flat_peaks.append(False)
                         flat_lines.append(False)
                         break
+        if len(flat_lines)==0 or len(flat_peaks)==0:
+            fquote_lines = 1
+            fquote_peaks = 1
+        else:
+            fquote_lines = flat_lines.count(True)/len(flat_lines)
+            fquote_peaks = flat_peaks.count(True)/len(flat_peaks)
+            
           
         fquote_lines = flat_lines.count(True)/len(flat_lines)
         fquote_peaks = flat_peaks.count(True)/len(flat_peaks)
