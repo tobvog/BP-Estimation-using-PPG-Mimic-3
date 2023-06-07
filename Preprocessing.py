@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 
-from hampel import hampel
 from scipy.signal import butter, sosfiltfilt, medfilt
 
 class Preprocessing_mimic3:
@@ -149,6 +148,28 @@ class Preprocessing_mimic3:
             
         return np.array(cycle_pleth, dtype=object), np.array(cycle_abp, dtype=object)
 
+###############################################################################
+###############################################################################
+###############################################################################
+    def segment_cycles_nn(self, peak_idx, pleth):
+        
+        t = int(self.fs*2.5)
+        dev1 = np.diff(pleth)
+        dev2 = np.diff(dev1)
+        
+        dev0_cyc, dev1_cyc, dev2_cyc, peak_idx_nn = [[] for x in range(0, 3)]
+        
+        for nr_peak, idx_p in enumerate(peak_idx):
+            try:
+                dev0_cyc.append(pleth[idx_p-t:idx_p+t])
+                dev1_cyc.append(dev1[idx_p-t:idx_p+t])
+                dev2_cyc.append(dev2[idx_p-t:idx_p+t])
+                peak_idx_nn.append(peak_idx[nr_peak])
+            except:
+                continue
+            
+        return np.array(dev0_cyc), np.array(dev1_cyc), np.array(dev2_cyc), np.array(peak_idx_nn) 
+            
         
         
         

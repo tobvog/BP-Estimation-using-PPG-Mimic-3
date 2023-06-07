@@ -28,6 +28,7 @@ for i in range(0, nr_sub):
     print("Step 2: Segment Cycles")
     preprocess = Preprocessing_mimic3([pleth_new, abp_new, data[2]], None)
     pleth_cycle, abp_cycle = preprocess.segment_cycles(idx_peaks, [30, 110])
+    
    
     stats, flats = preprocess.detect_flat(data=[pleth_cycle, abp_cycle], edge_lines=0.1, edge_peaks=0.05)
     stats_all.append(stats)
@@ -42,8 +43,13 @@ for i in range(0, nr_sub):
         pleth_cycle_new = pleth_cycle[idx_new]
         abp_cycle_new = abp_cycle[idx_new]
         idx_peaks_new = idx_peaks[idx_new]
+        nn_cycle_dev0, nn_cycle_dev1, nn_cycle_dev2, peak_idx_nn = preprocess.segment_cycles_nn(idx_new, pleth_new)
+        
     
         np.save(path_intern+files[i], [pleth_cycle_new, abp_cycle_new, data[2], idx_peaks_new])
+        np.save(path_x+"/dev0"+files[i], nn_cycle_dev0)
+        np.save(path_x+"/dev1"+files[i], nn_cycle_dev1)
+        np.save(path_x+"/dev2"+files[i], nn_cycle_dev2)
 np.save(path_intern+"stats.npy", np.array(stats_all))
             
 
