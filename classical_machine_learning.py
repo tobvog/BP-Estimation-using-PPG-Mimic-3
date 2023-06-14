@@ -6,7 +6,7 @@ import numpy as np
 import os
 
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import KFold
 from sklearn.metrics import mean_absolute_error
 #%%
 
@@ -40,26 +40,32 @@ def batch(iterable, n=1):
 #%% Load Data
 # path = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat/"
 path= "E:/Uni/Master BMIT/Programmierprojekt/feat/"
-files = os.listdir(path+"feature") 
+path2 = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/"
+files = np.array(os.listdir(path2+"feature")) 
 
+#x = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files], dtype=object)
 #x = np.array([np.load(path+"feature/"+subject, allow_pickle=True) for subject in files], dtype=object)
 y = np.array([np.load(path+"ground_truth/ml/"+subject, allow_pickle=True) for subject in files], dtype=object)
-batch_size = int((len(files)-1)/3) # 334
+batch_size = 128
 
 #%% Settings #######################
 pers = False
-dummy = True
+dummy = False
 # label = 0 SBP
 # label = 1 DBP
 label = 0
 ####################################
 #clf = RandomForestRegressor(warm_start=True)
-loo = LeaveOneOut()
-loo.get_n_splits(files)
+n_splits = 10
+kfold = KFold(n_splits=n_splits)
+kfold.get_n_splits(files)
 
 all_mae = []
-for train_index, test_index in loo.split(files):
-    
+#all_mae = list(np.load("C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/testing/dummy_mae_sbp.npy"))
+nr_fold = 1
+for train_index, test_index in kfold.split(files):
+    #if test_index < len(all_mae):
+    #    continue
     #clf = RandomForestRegressor(warm_start=True, verbose=2, n_jobs=-1)
     #loo = LeaveOneOut()
     
@@ -67,7 +73,7 @@ for train_index, test_index in loo.split(files):
         print("The variables _pers_ and _dummy_ must not both be True!")
         break
     
-    print("Learning Part: ", str(test_index+1), " of ", [len(files)])
+    print("Number Fold: ", [nr_fold], " of ", [n_splits])
     '''
     y_train = y[train_index]
     y_test = y[test_index]   
@@ -89,11 +95,12 @@ for train_index, test_index in loo.split(files):
         y_test = y[test_index]   
         y_train = spec_flatten_y(y_train)
         y_test = spec_flatten_y(y_test)
+        if len(y_test) == 0:
+            continue
         y_test = y_test[:,label]
         y_train = y_train[:,label]
         
-        if len(y_test) == 0:
-            continue
+
         
         y_pred = np.full(len(y_test), np.mean(y_train))
         
@@ -103,22 +110,31 @@ for train_index, test_index in loo.split(files):
 ###########################################   
 ###########################################              
     elif pers==False and dummy==False: 
-        clf = RandomForestRegressor(warm_start=True)
+        clf = RandomForestRegressor(verbose=2, n_jobs=-1, warm_start=True)
         
-        x_test = np.load(path+"feature/ml/"+files[test_index], allow_pickle=True) 
-        y_test = y[test_index]
-        x_test, y_test = spec_flatten(x_test, y_test)
-        y_test = y_test[:,label]
+        #x_test = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[test_index]], dtype=object)
+        # 
+        # x_train, y_train = x[train_index], y[train_index]
         
+        # x_test, y_test = spec_flatten(x_test, y_test)
+        # x_train, y_train = spec_flatten(x_train, y_train)
+        # y_test = y_test[:,label]
+        nr_batch = 1
         for mini_batch in batch(train_index, batch_size):
-            x_train = np.load(path+"feature/ml/"+files[mini_batch], allow_pickle=True)
+            print("Batch nr: "+str(nr_batch)+" of 8")
+            #x_train = np.load(path+"feature/ml/"+files[mini_batch], allow_pickle=True)
+            x_train = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[mini_batch]], dtype=object)
             y_train = y[mini_batch]
             x_train, y_train = spec_flatten(x_train, y_train)
             y_train = y_train[:,label]
-            
+           
             clf.fit(x_train, y_train)
+            clf.n_estimators += 1
         
-        
+        x_test = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[test_index]], dtype=object)
+        y_test = y[test_index]
+        x_test, y_test = spec_flatten(x_test, y_test)
+        y_test = y_test[:,label]
         y_pred = clf.predict(x_test)
         
         mae = mean_absolute_error(y_test, y_pred)
@@ -128,7 +144,7 @@ for train_index, test_index in loo.split(files):
 ###########################################   
 ########################################### 
     elif pers==True and dummy==False:
-        clf = RandomForestRegressor(warm_start=True)
+        clf = RandomForestRegressor(warm_start=True, verbose=2, n_jobs=4)
         nr_cyc = int(len(x_test)*0.2)
         
         x_test = np.load(path+"feature/ml/"+files[test_index], allow_pickle=True) 
@@ -157,7 +173,9 @@ for train_index, test_index in loo.split(files):
 mean_mae = np.mean(all_mae)
 print("Mean MAE: ", mean_mae)
 
+#np.save("C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/testing/dummy_mae_sbp.npy", all_mae)
         
+
 
 
 
