@@ -46,34 +46,30 @@ files = np.array(os.listdir(path2+"feature"))
 #x = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files], dtype=object)
 #x = np.array([np.load(path+"feature/"+subject, allow_pickle=True) for subject in files], dtype=object)
 y = np.array([np.load(path+"ground_truth/ml/"+subject, allow_pickle=True) for subject in files], dtype=object)
-batch_size = 128
+batch_size = 64
+nr_batches = int(len(y)/batch_size)
 
 #%% Settings #######################
-pers = False
+pers = True
 dummy = False
 # label = 0 SBP
 # label = 1 DBP
 label = 0
 ####################################
-#clf = RandomForestRegressor(warm_start=True)
 n_splits = 10
 kfold = KFold(n_splits=n_splits)
 kfold.get_n_splits(files)
 
 all_mae = []
-#all_mae = list(np.load("C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/testing/dummy_mae_sbp.npy"))
 nr_fold = 1
 for train_index, test_index in kfold.split(files):
-    #if test_index < len(all_mae):
-    #    continue
-    #clf = RandomForestRegressor(warm_start=True, verbose=2, n_jobs=-1)
-    #loo = LeaveOneOut()
     
     if pers==True and dummy==True:
         print("The variables _pers_ and _dummy_ must not both be True!")
         break
     
     print("Number Fold: ", [nr_fold], " of ", [n_splits])
+    nr_fold += 1
     '''
     y_train = y[train_index]
     y_test = y[test_index]   
@@ -90,46 +86,41 @@ for train_index, test_index in kfold.split(files):
 ###########################################   
 ###########################################    
     if pers==False and dummy==True:  
-
-        y_train = y[train_index]
-        y_test = y[test_index]   
-        y_train = spec_flatten_y(y_train)
-        y_test = spec_flatten_y(y_test)
-        if len(y_test) == 0:
-            continue
-        y_test = y_test[:,label]
-        y_train = y_train[:,label]
-        
-
-        
-        y_pred = np.full(len(y_test), np.mean(y_train))
-        
-        mae = mean_absolute_error(y_test, y_pred)   
-        all_mae.append(mae)
+        nr_batch = 1
+        for mini_batch in batch(train_index, batch_size):
+            print("Batch nr: "+str(nr_batch)+" of "+str(nr_batches))
+            nr_batch += 1
+            x_train = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[mini_batch]], dtype=object)
+            y_train = y[mini_batch]
+            x_train, y_train = spec_flatten(x_train, y_train)
+            y_train = y_train[:,label]        
+       
+            y_test = y[test_index]   
+            y_test = spec_flatten_y(y_test)
+            if len(y_test) == 0:
+                continue
+            y_test = y_test[:,label]
+       
+            y_pred = np.full(len(y_test), np.mean(y_train))  
+            mae = mean_absolute_error(y_test, y_pred)   
+            all_mae.append(mae)
 ########################################### 
 ###########################################   
 ###########################################              
     elif pers==False and dummy==False: 
-        clf = RandomForestRegressor(verbose=2, n_jobs=-1, warm_start=True)
+        clf = RandomForestRegressor(n_estimators=13, verbose=2, n_jobs=3, warm_start=True)
         
-        #x_test = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[test_index]], dtype=object)
-        # 
-        # x_train, y_train = x[train_index], y[train_index]
-        
-        # x_test, y_test = spec_flatten(x_test, y_test)
-        # x_train, y_train = spec_flatten(x_train, y_train)
-        # y_test = y_test[:,label]
         nr_batch = 1
         for mini_batch in batch(train_index, batch_size):
-            print("Batch nr: "+str(nr_batch)+" of 8")
-            #x_train = np.load(path+"feature/ml/"+files[mini_batch], allow_pickle=True)
+            print("Batch nr: "+str(nr_batch)+" of "+str(nr_batches))
+            nr_batch += 1
             x_train = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[mini_batch]], dtype=object)
             y_train = y[mini_batch]
             x_train, y_train = spec_flatten(x_train, y_train)
             y_train = y_train[:,label]
            
             clf.fit(x_train, y_train)
-            clf.n_estimators += 1
+            clf.n_estimators += 13
         
         x_test = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[test_index]], dtype=object)
         y_test = y[test_index]
@@ -144,25 +135,40 @@ for train_index, test_index in kfold.split(files):
 ###########################################   
 ########################################### 
     elif pers==True and dummy==False:
-        clf = RandomForestRegressor(warm_start=True, verbose=2, n_jobs=4)
-        nr_cyc = int(len(x_test)*0.2)
-        
-        x_test = np.load(path+"feature/ml/"+files[test_index], allow_pickle=True) 
+        clf = RandomForestRegressor(n_estimators=13, warm_start=True, verbose=2, n_jobs=4)
+        '''
+        x_test = np.load(path2+"feature/"+files[test_index], allow_pickle=True)
         y_test = y[test_index]
         x_test, y_test = spec_flatten(x_test, y_test)
         y_test = y_test[:,label]
-        
+        '''
+        x_test = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[test_index]], dtype=object)
+        y_test = y[test_index]
+        x_test, y_test = spec_flatten(x_test, y_test)
+        y_test = y_test[:,label]
+
+        nr_cyc = int(len(x_test) * 0.2)
         x_test = x_test[nr_cyc:]
         y_test = y_test[nr_cyc:]
-        
+        nr_batch = 1
         for mini_batch in batch(train_index, batch_size):
-            x_train = np.load(path+"feature/ml/"+files[mini_batch], allow_pickle=True)
+            print("Batch nr: "+str(nr_batch)+" of "+str(nr_batches))
+            nr_batch += 1
+            x_train = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[mini_batch]], dtype=object)
             y_train = y[mini_batch]
             x_train, y_train = spec_flatten(x_train, y_train)
             y_train = y_train[:,label]
             
             clf.fit(x_train, y_train)
-        
+            clf.n_estimators += 13
+            '''
+            if nr_batch==nr_batches:
+                clf.n_estimators += 85
+            else:
+                clf.n_estimators += 13
+            '''
+
+
         clf.fit(x_test[:nr_cyc], y_test[:nr_cyc])
         y_pred = clf.predict(x_test)
         
