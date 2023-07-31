@@ -1,0 +1,587 @@
+Model: "Final_Model"
+__________________________________________________________________________________________________
+ Layer (type)                   Output Shape         Param #     Connected to                     
+==================================================================================================
+ input_time1 (InputLayer)       [(None, 128, 624)]   0           []                               
+                                                                                                  
+ input_time2 (InputLayer)       [(None, 128, 624)]   0           []                               
+                                                                                                  
+ input_time3 (InputLayer)       [(None, 128, 624)]   0           []                               
+                                                                                                  
+ conv1d_428 (Conv1D)            (None, 128, 64)      319552      ['input_time1[0][0]']            
+                                                                                                  
+ conv1d_448 (Conv1D)            (None, 128, 64)      319552      ['input_time2[0][0]']            
+                                                                                                  
+ conv1d_468 (Conv1D)            (None, 128, 64)      319552      ['input_time3[0][0]']            
+                                                                                                  
+ batch_normalization_471 (Batch  (None, 128, 64)     256         ['conv1d_428[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_492 (Batch  (None, 128, 64)     256         ['conv1d_448[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_513 (Batch  (None, 128, 64)     256         ['conv1d_468[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_321 (ReLU)               (None, 128, 64)      0           ['batch_normalization_471[0][0]']
+                                                                                                  
+ re_lu_336 (ReLU)               (None, 128, 64)      0           ['batch_normalization_492[0][0]']
+                                                                                                  
+ re_lu_351 (ReLU)               (None, 128, 64)      0           ['batch_normalization_513[0][0]']
+                                                                                                  
+ conv1d_429 (Conv1D)            (None, 128, 64)      20544       ['re_lu_321[0][0]']              
+                                                                                                  
+ conv1d_449 (Conv1D)            (None, 128, 64)      20544       ['re_lu_336[0][0]']              
+                                                                                                  
+ conv1d_469 (Conv1D)            (None, 128, 64)      20544       ['re_lu_351[0][0]']              
+                                                                                                  
+ batch_normalization_472 (Batch  (None, 128, 64)     256         ['conv1d_429[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_493 (Batch  (None, 128, 64)     256         ['conv1d_449[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_514 (Batch  (None, 128, 64)     256         ['conv1d_469[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_322 (ReLU)               (None, 128, 64)      0           ['batch_normalization_472[0][0]']
+                                                                                                  
+ re_lu_337 (ReLU)               (None, 128, 64)      0           ['batch_normalization_493[0][0]']
+                                                                                                  
+ re_lu_352 (ReLU)               (None, 128, 64)      0           ['batch_normalization_514[0][0]']
+                                                                                                  
+ conv1d_430 (Conv1D)            (None, 128, 64)      12352       ['re_lu_322[0][0]']              
+                                                                                                  
+ conv1d_450 (Conv1D)            (None, 128, 64)      12352       ['re_lu_337[0][0]']              
+                                                                                                  
+ conv1d_470 (Conv1D)            (None, 128, 64)      12352       ['re_lu_352[0][0]']              
+                                                                                                  
+ batch_normalization_473 (Batch  (None, 128, 64)     256         ['conv1d_430[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_431 (Conv1D)            (None, 128, 64)      40000       ['input_time1[0][0]']            
+                                                                                                  
+ batch_normalization_494 (Batch  (None, 128, 64)     256         ['conv1d_450[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_451 (Conv1D)            (None, 128, 64)      40000       ['input_time2[0][0]']            
+                                                                                                  
+ batch_normalization_515 (Batch  (None, 128, 64)     256         ['conv1d_470[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_471 (Conv1D)            (None, 128, 64)      40000       ['input_time3[0][0]']            
+                                                                                                  
+ re_lu_323 (ReLU)               (None, 128, 64)      0           ['batch_normalization_473[0][0]']
+                                                                                                  
+ batch_normalization_474 (Batch  (None, 128, 64)     256         ['conv1d_431[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_338 (ReLU)               (None, 128, 64)      0           ['batch_normalization_494[0][0]']
+                                                                                                  
+ batch_normalization_495 (Batch  (None, 128, 64)     256         ['conv1d_451[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_353 (ReLU)               (None, 128, 64)      0           ['batch_normalization_515[0][0]']
+                                                                                                  
+ batch_normalization_516 (Batch  (None, 128, 64)     256         ['conv1d_471[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ add_107 (Add)                  (None, 128, 64)      0           ['re_lu_323[0][0]',              
+                                                                  'batch_normalization_474[0][0]']
+                                                                                                  
+ add_112 (Add)                  (None, 128, 64)      0           ['re_lu_338[0][0]',              
+                                                                  'batch_normalization_495[0][0]']
+                                                                                                  
+ add_117 (Add)                  (None, 128, 64)      0           ['re_lu_353[0][0]',              
+                                                                  'batch_normalization_516[0][0]']
+                                                                                                  
+ average_pooling1d_107 (Average  (None, 63, 64)      0           ['add_107[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ average_pooling1d_112 (Average  (None, 63, 64)      0           ['add_112[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ average_pooling1d_117 (Average  (None, 63, 64)      0           ['add_117[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ conv1d_432 (Conv1D)            (None, 63, 128)      65664       ['average_pooling1d_107[0][0]']  
+                                                                                                  
+ conv1d_452 (Conv1D)            (None, 63, 128)      65664       ['average_pooling1d_112[0][0]']  
+                                                                                                  
+ conv1d_472 (Conv1D)            (None, 63, 128)      65664       ['average_pooling1d_117[0][0]']  
+                                                                                                  
+ batch_normalization_476 (Batch  (None, 63, 128)     512         ['conv1d_432[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_497 (Batch  (None, 63, 128)     512         ['conv1d_452[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_518 (Batch  (None, 63, 128)     512         ['conv1d_472[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_324 (ReLU)               (None, 63, 128)      0           ['batch_normalization_476[0][0]']
+                                                                                                  
+ re_lu_339 (ReLU)               (None, 63, 128)      0           ['batch_normalization_497[0][0]']
+                                                                                                  
+ re_lu_354 (ReLU)               (None, 63, 128)      0           ['batch_normalization_518[0][0]']
+                                                                                                  
+ conv1d_433 (Conv1D)            (None, 63, 128)      82048       ['re_lu_324[0][0]']              
+                                                                                                  
+ conv1d_453 (Conv1D)            (None, 63, 128)      82048       ['re_lu_339[0][0]']              
+                                                                                                  
+ conv1d_473 (Conv1D)            (None, 63, 128)      82048       ['re_lu_354[0][0]']              
+                                                                                                  
+ batch_normalization_477 (Batch  (None, 63, 128)     512         ['conv1d_433[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_498 (Batch  (None, 63, 128)     512         ['conv1d_453[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_519 (Batch  (None, 63, 128)     512         ['conv1d_473[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_325 (ReLU)               (None, 63, 128)      0           ['batch_normalization_477[0][0]']
+                                                                                                  
+ re_lu_340 (ReLU)               (None, 63, 128)      0           ['batch_normalization_498[0][0]']
+                                                                                                  
+ re_lu_355 (ReLU)               (None, 63, 128)      0           ['batch_normalization_519[0][0]']
+                                                                                                  
+ conv1d_434 (Conv1D)            (None, 63, 128)      49280       ['re_lu_325[0][0]']              
+                                                                                                  
+ conv1d_454 (Conv1D)            (None, 63, 128)      49280       ['re_lu_340[0][0]']              
+                                                                                                  
+ conv1d_474 (Conv1D)            (None, 63, 128)      49280       ['re_lu_355[0][0]']              
+                                                                                                  
+ batch_normalization_478 (Batch  (None, 63, 128)     512         ['conv1d_434[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_435 (Conv1D)            (None, 63, 128)      8320        ['average_pooling1d_107[0][0]']  
+                                                                                                  
+ batch_normalization_499 (Batch  (None, 63, 128)     512         ['conv1d_454[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_455 (Conv1D)            (None, 63, 128)      8320        ['average_pooling1d_112[0][0]']  
+                                                                                                  
+ batch_normalization_520 (Batch  (None, 63, 128)     512         ['conv1d_474[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_475 (Conv1D)            (None, 63, 128)      8320        ['average_pooling1d_117[0][0]']  
+                                                                                                  
+ re_lu_326 (ReLU)               (None, 63, 128)      0           ['batch_normalization_478[0][0]']
+                                                                                                  
+ batch_normalization_479 (Batch  (None, 63, 128)     512         ['conv1d_435[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_341 (ReLU)               (None, 63, 128)      0           ['batch_normalization_499[0][0]']
+                                                                                                  
+ batch_normalization_500 (Batch  (None, 63, 128)     512         ['conv1d_455[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_356 (ReLU)               (None, 63, 128)      0           ['batch_normalization_520[0][0]']
+                                                                                                  
+ batch_normalization_521 (Batch  (None, 63, 128)     512         ['conv1d_475[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ add_108 (Add)                  (None, 63, 128)      0           ['re_lu_326[0][0]',              
+                                                                  'batch_normalization_479[0][0]']
+                                                                                                  
+ add_113 (Add)                  (None, 63, 128)      0           ['re_lu_341[0][0]',              
+                                                                  'batch_normalization_500[0][0]']
+                                                                                                  
+ add_118 (Add)                  (None, 63, 128)      0           ['re_lu_356[0][0]',              
+                                                                  'batch_normalization_521[0][0]']
+                                                                                                  
+ average_pooling1d_108 (Average  (None, 31, 128)     0           ['add_108[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ average_pooling1d_113 (Average  (None, 31, 128)     0           ['add_113[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ average_pooling1d_118 (Average  (None, 31, 128)     0           ['add_118[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ conv1d_436 (Conv1D)            (None, 31, 128)      131200      ['average_pooling1d_108[0][0]']  
+                                                                                                  
+ conv1d_456 (Conv1D)            (None, 31, 128)      131200      ['average_pooling1d_113[0][0]']  
+                                                                                                  
+ conv1d_476 (Conv1D)            (None, 31, 128)      131200      ['average_pooling1d_118[0][0]']  
+                                                                                                  
+ batch_normalization_480 (Batch  (None, 31, 128)     512         ['conv1d_436[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_501 (Batch  (None, 31, 128)     512         ['conv1d_456[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_522 (Batch  (None, 31, 128)     512         ['conv1d_476[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_327 (ReLU)               (None, 31, 128)      0           ['batch_normalization_480[0][0]']
+                                                                                                  
+ re_lu_342 (ReLU)               (None, 31, 128)      0           ['batch_normalization_501[0][0]']
+                                                                                                  
+ re_lu_357 (ReLU)               (None, 31, 128)      0           ['batch_normalization_522[0][0]']
+                                                                                                  
+ conv1d_437 (Conv1D)            (None, 31, 128)      82048       ['re_lu_327[0][0]']              
+                                                                                                  
+ conv1d_457 (Conv1D)            (None, 31, 128)      82048       ['re_lu_342[0][0]']              
+                                                                                                  
+ conv1d_477 (Conv1D)            (None, 31, 128)      82048       ['re_lu_357[0][0]']              
+                                                                                                  
+ batch_normalization_481 (Batch  (None, 31, 128)     512         ['conv1d_437[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_502 (Batch  (None, 31, 128)     512         ['conv1d_457[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_523 (Batch  (None, 31, 128)     512         ['conv1d_477[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_328 (ReLU)               (None, 31, 128)      0           ['batch_normalization_481[0][0]']
+                                                                                                  
+ re_lu_343 (ReLU)               (None, 31, 128)      0           ['batch_normalization_502[0][0]']
+                                                                                                  
+ re_lu_358 (ReLU)               (None, 31, 128)      0           ['batch_normalization_523[0][0]']
+                                                                                                  
+ conv1d_438 (Conv1D)            (None, 31, 128)      49280       ['re_lu_328[0][0]']              
+                                                                                                  
+ conv1d_458 (Conv1D)            (None, 31, 128)      49280       ['re_lu_343[0][0]']              
+                                                                                                  
+ conv1d_478 (Conv1D)            (None, 31, 128)      49280       ['re_lu_358[0][0]']              
+                                                                                                  
+ batch_normalization_482 (Batch  (None, 31, 128)     512         ['conv1d_438[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_439 (Conv1D)            (None, 31, 128)      16512       ['average_pooling1d_108[0][0]']  
+                                                                                                  
+ batch_normalization_503 (Batch  (None, 31, 128)     512         ['conv1d_458[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_459 (Conv1D)            (None, 31, 128)      16512       ['average_pooling1d_113[0][0]']  
+                                                                                                  
+ batch_normalization_524 (Batch  (None, 31, 128)     512         ['conv1d_478[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_479 (Conv1D)            (None, 31, 128)      16512       ['average_pooling1d_118[0][0]']  
+                                                                                                  
+ re_lu_329 (ReLU)               (None, 31, 128)      0           ['batch_normalization_482[0][0]']
+                                                                                                  
+ batch_normalization_483 (Batch  (None, 31, 128)     512         ['conv1d_439[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_344 (ReLU)               (None, 31, 128)      0           ['batch_normalization_503[0][0]']
+                                                                                                  
+ batch_normalization_504 (Batch  (None, 31, 128)     512         ['conv1d_459[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_359 (ReLU)               (None, 31, 128)      0           ['batch_normalization_524[0][0]']
+                                                                                                  
+ batch_normalization_525 (Batch  (None, 31, 128)     512         ['conv1d_479[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ add_109 (Add)                  (None, 31, 128)      0           ['re_lu_329[0][0]',              
+                                                                  'batch_normalization_483[0][0]']
+                                                                                                  
+ add_114 (Add)                  (None, 31, 128)      0           ['re_lu_344[0][0]',              
+                                                                  'batch_normalization_504[0][0]']
+                                                                                                  
+ add_119 (Add)                  (None, 31, 128)      0           ['re_lu_359[0][0]',              
+                                                                  'batch_normalization_525[0][0]']
+                                                                                                  
+ average_pooling1d_109 (Average  (None, 15, 128)     0           ['add_109[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ average_pooling1d_114 (Average  (None, 15, 128)     0           ['add_114[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ average_pooling1d_119 (Average  (None, 15, 128)     0           ['add_119[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ conv1d_440 (Conv1D)            (None, 15, 128)      131200      ['average_pooling1d_109[0][0]']  
+                                                                                                  
+ conv1d_460 (Conv1D)            (None, 15, 128)      131200      ['average_pooling1d_114[0][0]']  
+                                                                                                  
+ conv1d_480 (Conv1D)            (None, 15, 128)      131200      ['average_pooling1d_119[0][0]']  
+                                                                                                  
+ batch_normalization_484 (Batch  (None, 15, 128)     512         ['conv1d_440[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_505 (Batch  (None, 15, 128)     512         ['conv1d_460[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_526 (Batch  (None, 15, 128)     512         ['conv1d_480[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_330 (ReLU)               (None, 15, 128)      0           ['batch_normalization_484[0][0]']
+                                                                                                  
+ re_lu_345 (ReLU)               (None, 15, 128)      0           ['batch_normalization_505[0][0]']
+                                                                                                  
+ re_lu_360 (ReLU)               (None, 15, 128)      0           ['batch_normalization_526[0][0]']
+                                                                                                  
+ conv1d_441 (Conv1D)            (None, 15, 128)      82048       ['re_lu_330[0][0]']              
+                                                                                                  
+ conv1d_461 (Conv1D)            (None, 15, 128)      82048       ['re_lu_345[0][0]']              
+                                                                                                  
+ conv1d_481 (Conv1D)            (None, 15, 128)      82048       ['re_lu_360[0][0]']              
+                                                                                                  
+ batch_normalization_485 (Batch  (None, 15, 128)     512         ['conv1d_441[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_506 (Batch  (None, 15, 128)     512         ['conv1d_461[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_527 (Batch  (None, 15, 128)     512         ['conv1d_481[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_331 (ReLU)               (None, 15, 128)      0           ['batch_normalization_485[0][0]']
+                                                                                                  
+ re_lu_346 (ReLU)               (None, 15, 128)      0           ['batch_normalization_506[0][0]']
+                                                                                                  
+ re_lu_361 (ReLU)               (None, 15, 128)      0           ['batch_normalization_527[0][0]']
+                                                                                                  
+ conv1d_442 (Conv1D)            (None, 15, 128)      49280       ['re_lu_331[0][0]']              
+                                                                                                  
+ conv1d_462 (Conv1D)            (None, 15, 128)      49280       ['re_lu_346[0][0]']              
+                                                                                                  
+ conv1d_482 (Conv1D)            (None, 15, 128)      49280       ['re_lu_361[0][0]']              
+                                                                                                  
+ batch_normalization_486 (Batch  (None, 15, 128)     512         ['conv1d_442[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_443 (Conv1D)            (None, 15, 128)      16512       ['average_pooling1d_109[0][0]']  
+                                                                                                  
+ batch_normalization_507 (Batch  (None, 15, 128)     512         ['conv1d_462[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_463 (Conv1D)            (None, 15, 128)      16512       ['average_pooling1d_114[0][0]']  
+                                                                                                  
+ batch_normalization_528 (Batch  (None, 15, 128)     512         ['conv1d_482[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_483 (Conv1D)            (None, 15, 128)      16512       ['average_pooling1d_119[0][0]']  
+                                                                                                  
+ re_lu_332 (ReLU)               (None, 15, 128)      0           ['batch_normalization_486[0][0]']
+                                                                                                  
+ batch_normalization_487 (Batch  (None, 15, 128)     512         ['conv1d_443[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_347 (ReLU)               (None, 15, 128)      0           ['batch_normalization_507[0][0]']
+                                                                                                  
+ batch_normalization_508 (Batch  (None, 15, 128)     512         ['conv1d_463[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_362 (ReLU)               (None, 15, 128)      0           ['batch_normalization_528[0][0]']
+                                                                                                  
+ batch_normalization_529 (Batch  (None, 15, 128)     512         ['conv1d_483[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ add_110 (Add)                  (None, 15, 128)      0           ['re_lu_332[0][0]',              
+                                                                  'batch_normalization_487[0][0]']
+                                                                                                  
+ add_115 (Add)                  (None, 15, 128)      0           ['re_lu_347[0][0]',              
+                                                                  'batch_normalization_508[0][0]']
+                                                                                                  
+ add_120 (Add)                  (None, 15, 128)      0           ['re_lu_362[0][0]',              
+                                                                  'batch_normalization_529[0][0]']
+                                                                                                  
+ average_pooling1d_110 (Average  (None, 7, 128)      0           ['add_110[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ average_pooling1d_115 (Average  (None, 7, 128)      0           ['add_115[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ average_pooling1d_120 (Average  (None, 7, 128)      0           ['add_120[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ conv1d_444 (Conv1D)            (None, 7, 128)       131200      ['average_pooling1d_110[0][0]']  
+                                                                                                  
+ conv1d_464 (Conv1D)            (None, 7, 128)       131200      ['average_pooling1d_115[0][0]']  
+                                                                                                  
+ conv1d_484 (Conv1D)            (None, 7, 128)       131200      ['average_pooling1d_120[0][0]']  
+                                                                                                  
+ batch_normalization_488 (Batch  (None, 7, 128)      512         ['conv1d_444[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_509 (Batch  (None, 7, 128)      512         ['conv1d_464[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_530 (Batch  (None, 7, 128)      512         ['conv1d_484[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_333 (ReLU)               (None, 7, 128)       0           ['batch_normalization_488[0][0]']
+                                                                                                  
+ re_lu_348 (ReLU)               (None, 7, 128)       0           ['batch_normalization_509[0][0]']
+                                                                                                  
+ re_lu_363 (ReLU)               (None, 7, 128)       0           ['batch_normalization_530[0][0]']
+                                                                                                  
+ conv1d_445 (Conv1D)            (None, 7, 128)       82048       ['re_lu_333[0][0]']              
+                                                                                                  
+ conv1d_465 (Conv1D)            (None, 7, 128)       82048       ['re_lu_348[0][0]']              
+                                                                                                  
+ conv1d_485 (Conv1D)            (None, 7, 128)       82048       ['re_lu_363[0][0]']              
+                                                                                                  
+ batch_normalization_489 (Batch  (None, 7, 128)      512         ['conv1d_445[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_510 (Batch  (None, 7, 128)      512         ['conv1d_465[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_531 (Batch  (None, 7, 128)      512         ['conv1d_485[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ input_spec1 (InputLayer)       [(None, 128, 624)]   0           []                               
+                                                                                                  
+ input_spec2 (InputLayer)       [(None, 128, 624)]   0           []                               
+                                                                                                  
+ input_spec3 (InputLayer)       [(None, 128, 624)]   0           []                               
+                                                                                                  
+ re_lu_334 (ReLU)               (None, 7, 128)       0           ['batch_normalization_489[0][0]']
+                                                                                                  
+ re_lu_349 (ReLU)               (None, 7, 128)       0           ['batch_normalization_510[0][0]']
+                                                                                                  
+ re_lu_364 (ReLU)               (None, 7, 128)       0           ['batch_normalization_531[0][0]']
+                                                                                                  
+ tf.signal.stft_22 (TFOpLambda)  (None, 128, 8, 65)  0           ['input_spec1[0][0]']            
+                                                                                                  
+ tf.signal.stft_23 (TFOpLambda)  (None, 128, 8, 65)  0           ['input_spec2[0][0]']            
+                                                                                                  
+ tf.signal.stft_24 (TFOpLambda)  (None, 128, 8, 65)  0           ['input_spec3[0][0]']            
+                                                                                                  
+ conv1d_446 (Conv1D)            (None, 7, 128)       49280       ['re_lu_334[0][0]']              
+                                                                                                  
+ conv1d_466 (Conv1D)            (None, 7, 128)       49280       ['re_lu_349[0][0]']              
+                                                                                                  
+ conv1d_486 (Conv1D)            (None, 7, 128)       49280       ['re_lu_364[0][0]']              
+                                                                                                  
+ tf.math.abs_22 (TFOpLambda)    (None, 128, 8, 65)   0           ['tf.signal.stft_22[0][0]']      
+                                                                                                  
+ tf.math.abs_23 (TFOpLambda)    (None, 128, 8, 65)   0           ['tf.signal.stft_23[0][0]']      
+                                                                                                  
+ tf.math.abs_24 (TFOpLambda)    (None, 128, 8, 65)   0           ['tf.signal.stft_24[0][0]']      
+                                                                                                  
+ batch_normalization_490 (Batch  (None, 7, 128)      512         ['conv1d_446[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_447 (Conv1D)            (None, 7, 128)       16512       ['average_pooling1d_110[0][0]']  
+                                                                                                  
+ batch_normalization_511 (Batch  (None, 7, 128)      512         ['conv1d_466[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_467 (Conv1D)            (None, 7, 128)       16512       ['average_pooling1d_115[0][0]']  
+                                                                                                  
+ batch_normalization_532 (Batch  (None, 7, 128)      512         ['conv1d_486[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ conv1d_487 (Conv1D)            (None, 7, 128)       16512       ['average_pooling1d_120[0][0]']  
+                                                                                                  
+ layer_normalization_22 (LayerN  (None, 128, 8, 65)  130         ['tf.math.abs_22[0][0]']         
+ ormalization)                                                                                    
+                                                                                                  
+ layer_normalization_23 (LayerN  (None, 128, 8, 65)  130         ['tf.math.abs_23[0][0]']         
+ ormalization)                                                                                    
+                                                                                                  
+ layer_normalization_24 (LayerN  (None, 128, 8, 65)  130         ['tf.math.abs_24[0][0]']         
+ ormalization)                                                                                    
+                                                                                                  
+ re_lu_335 (ReLU)               (None, 7, 128)       0           ['batch_normalization_490[0][0]']
+                                                                                                  
+ batch_normalization_491 (Batch  (None, 7, 128)      512         ['conv1d_447[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_350 (ReLU)               (None, 7, 128)       0           ['batch_normalization_511[0][0]']
+                                                                                                  
+ batch_normalization_512 (Batch  (None, 7, 128)      512         ['conv1d_467[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ re_lu_365 (ReLU)               (None, 7, 128)       0           ['batch_normalization_532[0][0]']
+                                                                                                  
+ batch_normalization_533 (Batch  (None, 7, 128)      512         ['conv1d_487[0][0]']             
+ Normalization)                                                                                   
+                                                                                                  
+ reshape_spec0 (Reshape)        (None, 1024, 65)     0           ['layer_normalization_22[0][0]'] 
+                                                                                                  
+ reshape_spec1 (Reshape)        (None, 1024, 65)     0           ['layer_normalization_23[0][0]'] 
+                                                                                                  
+ reshape_spec2 (Reshape)        (None, 1024, 65)     0           ['layer_normalization_24[0][0]'] 
+                                                                                                  
+ add_111 (Add)                  (None, 7, 128)       0           ['re_lu_335[0][0]',              
+                                                                  'batch_normalization_491[0][0]']
+                                                                                                  
+ add_116 (Add)                  (None, 7, 128)       0           ['re_lu_350[0][0]',              
+                                                                  'batch_normalization_512[0][0]']
+                                                                                                  
+ add_121 (Add)                  (None, 7, 128)       0           ['re_lu_365[0][0]',              
+                                                                  'batch_normalization_533[0][0]']
+                                                                                                  
+ gru_29 (GRU)                   (None, 65)           25740       ['reshape_spec0[0][0]']          
+                                                                                                  
+ gru_30 (GRU)                   (None, 65)           25740       ['reshape_spec1[0][0]']          
+                                                                                                  
+ gru_31 (GRU)                   (None, 65)           25740       ['reshape_spec2[0][0]']          
+                                                                                                  
+ average_pooling1d_111 (Average  (None, 3, 128)      0           ['add_111[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ average_pooling1d_116 (Average  (None, 3, 128)      0           ['add_116[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ average_pooling1d_121 (Average  (None, 3, 128)      0           ['add_121[0][0]']                
+ Pooling1D)                                                                                       
+                                                                                                  
+ flatten_22 (Flatten)           (None, 65)           0           ['gru_29[0][0]']                 
+                                                                                                  
+ flatten_23 (Flatten)           (None, 65)           0           ['gru_30[0][0]']                 
+                                                                                                  
+ flatten_24 (Flatten)           (None, 65)           0           ['gru_31[0][0]']                 
+                                                                                                  
+ concatenate_21 (Concatenate)   (None, 3, 384)       0           ['average_pooling1d_111[0][0]',  
+                                                                  'average_pooling1d_116[0][0]',  
+                                                                  'average_pooling1d_121[0][0]']  
+                                                                                                  
+ dense_43 (Dense)               (None, 32)           2112        ['flatten_22[0][0]']             
+                                                                                                  
+ dense_44 (Dense)               (None, 32)           2112        ['flatten_23[0][0]']             
+                                                                                                  
+ dense_45 (Dense)               (None, 32)           2112        ['flatten_24[0][0]']             
+                                                                                                  
+ batch_normalization_534 (Batch  (None, 3, 384)      1536        ['concatenate_21[0][0]']         
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_475 (Batch  (None, 32)          128         ['dense_43[0][0]']               
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_496 (Batch  (None, 32)          128         ['dense_44[0][0]']               
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_517 (Batch  (None, 32)          128         ['dense_45[0][0]']               
+ Normalization)                                                                                   
+                                                                                                  
+ gru_32 (GRU)                   (None, 384)          887040      ['batch_normalization_534[0][0]']
+                                                                                                  
+ concatenate_22 (Concatenate)   (None, 96)           0           ['batch_normalization_475[0][0]',
+                                                                  'batch_normalization_496[0][0]',
+                                                                  'batch_normalization_517[0][0]']
+                                                                                                  
+ batch_normalization_535 (Batch  (None, 384)         1536        ['gru_32[0][0]']                 
+ Normalization)                                                                                   
+                                                                                                  
+ batch_normalization_536 (Batch  (None, 96)          384         ['concatenate_22[0][0]']         
+ Normalization)                                                                                   
+                                                                                                  
+ concatenate_23 (Concatenate)   (None, 480)          0           ['batch_normalization_535[0][0]',
+                                                                  'batch_normalization_536[0][0]']
+                                                                                                  
+ dense_46 (Dense)               (None, 32)           15392       ['concatenate_23[0][0]']         
+                                                                                                  
+ dropout_14 (Dropout)           (None, 32)           0           ['dense_46[0][0]']               
+                                                                                                  
+ dense_47 (Dense)               (None, 32)           1056        ['dropout_14[0][0]']             
+                                                                                                  
+ dropout_15 (Dropout)           (None, 32)           0           ['dense_47[0][0]']               
+                                                                                                  
+ dense_48 (Dense)               (None, 2)            66          ['dropout_15[0][0]']             
+                                                                                                  
+==================================================================================================
+Total params: 5,323,628
+Trainable params: 5,307,884
+Non-trainable params: 15,744
+__________________________________________________________________________________________________

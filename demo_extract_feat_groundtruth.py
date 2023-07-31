@@ -17,11 +17,10 @@ for i in range(0, len(files)):
     
     ml_prep = ML_Preparing(data_cyc[0], data_cyc[1], data_time[1], data_cyc[3])
     
-    dev1, dev2 = ml_prep.derivation()
+    dev1 = ml_prep.derivation()
     feat = ml_prep.extract_feat(dev1)
     
     ml_gt = ml_prep.extract_sbp_dbp(2, 110)
-    nn_gt = ml_prep.extract_sbp_dbp(5, 110)
     '''
     all_dev.append([dev1, dev2])
     all_feat.append(feat)
@@ -29,10 +28,8 @@ for i in range(0, len(files)):
     all_gt_nn.append(nn_gt)
     '''
     np.save(target_path+"derivations/dev1/"+files[i], dev1)
-    np.save(target_path+"derivations/dev2/"+files[i], dev2)
     np.save(target_path+"feature/"+files[i], feat)
     np.save(target_path+"ground_truth_ml/"+files[i], ml_gt)
-    np.save(target_path+"ground_truth_nn/"+files[i], nn_gt)
 
     
     

@@ -9,25 +9,41 @@ from scipy.signal import argrelextrema, welch
 from scipy.stats import entropy, skew, kurtosis
 #%%
 class ML_Preparing:   
-    def __init__(self, pleth_cyc, abp_cyc, abp, idx_peak, fs=125):
+    def __init__(self, pleth_cyc=None, abp_cyc=None, pleth=None, abp=None, idx_peak=None, fs=125):
         self.pleth_cyc = pleth_cyc
         self.abp_cyc = abp_cyc
+        self.pleth = pleth
         self.abp = abp
         self.idx_peak = idx_peak
         self.fs = fs
 ###############################################################################
 ###############################################################################
 ###############################################################################        
-    def derivation(self):
-        dev1, = []
+    def derivation2(self):
+        dev1, dev2 = [], []
         
         for cycle in self.pleth_cyc:
             cyc_dev1 = np.diff(cycle)
-            
+            cyc_dev1 = np.append(cyc_dev1, cyc_dev1[-1])
+            cyc_dev2 = np.diff(cyc_dev1)
+            cyc_dev2 = np.append(cyc_dev2, cyc_dev2[-1])
+            dev2.append(cyc_dev2)
             dev1.append(cyc_dev1)
             
-        return np.array(dev1, dtype=object) 
-    
+        return np.array(dev1, dtype=object), np.array(dev2, dtype=object) 
+
+###############################################################################
+###############################################################################
+###############################################################################        
+    def derivation(self):
+        dev1 = []
+        
+        for cycle in self.pleth_cyc:
+            cyc_dev1 = np.diff(cycle)
+            dev1.append(cyc_dev1)
+            
+        return np.array(dev1, dtype=object)
+
 ###############################################################################
 ###############################################################################
 ###############################################################################
@@ -158,15 +174,19 @@ class ML_Preparing:
 ###############################################################################
 ###############################################################################
 ###############################################################################
-    def extract_sbp_dbp(self, window, pad):
+    def extract_sbp_dbp(self, window, pad, nn_epoch=False):
         data = self.abp
         result = []
         distance = int((window*self.fs)/2)
+        pleth_cyc = [] 
         
         for i in range(0, len(self.idx_peak)):
             main_p = self.idx_peak[i] 
             idx_min = main_p-distance
             idx_max = main_p+distance
+            
+            if len(self.pleth[idx_min:idx_max]) != 624:
+                continue
             
             status = "forward"
             peaks_max = [main_p]
@@ -202,8 +222,15 @@ class ML_Preparing:
             dbp = np.mean(peaks_min)
             
             result.append([sbp, dbp])
-                
-        return np.array(result)
+            
+            if nn_epoch==True:
+                pleth_cyc.append(self.pleth[idx_min:idx_max])
+
+                       
+        if nn_epoch==True:
+            return np.array(result), np.array(pleth_cyc)
+        else:          
+            return np.array(result)
                         
 ###############################################################################
 ###############################################################################

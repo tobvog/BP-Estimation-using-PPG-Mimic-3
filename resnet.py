@@ -3,252 +3,254 @@ import os
 from DataGenerator import DataGenerator
 
 from sklearn.model_selection import KFold, train_test_split
-
-
-from tensorflow.keras.layers import Input, Conv1D, Reshape, LayerNormalization, ReLU, BatchNormalization,Add, AveragePooling1D, Flatten, Dense, GRU, concatenate, Permute, Dropout
-from tensorflow.keras.models import Model
-#from tensorflow.python.keras.utils.multi_gpu_utils import multi_gpu_model 
+from tensorflow import expand_dims, squeeze, identity
+from keras.utils.vis_utils import plot_model
+from tensorflow.keras.layers import Input, Conv1D, Reshape, LayerNormalization, ReLU, BatchNormalization,Add, AveragePooling1D, GlobalAveragePooling1D, Flatten, Dense, GRU, concatenate, Permute, Dropout 
 from keras.regularizers import l2
 from keras import optimizers, Sequential
-#from librosa.feature import melspectrogram
-#from librosa.util import normalize
-#import Spectrogram
-
+from tensorflow import keras
 import tensorflow as tf
-#from kapre.time_frequency import Spectrogram
-#from kapre.utils import Normalization2D
 
-'''
-class Spectrogram(keras.layers.Layer):
-    def __init__(self, n_dft=256, n_hop=128, **kwargs):
-        super(Spectrogram, self).__init__(**kwargs)
-        self.n_dft = n_dft
-        self.n_hop = n_hop
 
-    def call(self, inputs):
-        spectrogram = tf.signal.stft(inputs, frame_length=self.n_dft, frame_step=self.n_hop)
-        spectrogram = tf.abs(spectrogram)
-        return spectrogram
 
-    def get_config(self):
-        config = super(Spectrogram, self).get_config()
-        config.update({'frame_length': self.n_dft, 'frame_step': self.n_hop})
-        return config
-'''
-def resnet_block(inp, num_filter, kernel_sizes=[8,5,3], pool_size=3, pool_stride_size=2):
-    def conv_block(inp, num_filter, kernel_size):
+keras.backend.clear_session()
+
+def resnet_block(inp, batch_size, num_filter, kernel_sizes=[8,5,3], pool_size=3, pool_stride_size=2):
+    def conv_block(inp, batch_size, num_filter, kernel_size):
         outp = Conv1D(kernel_size=kernel_size, filters=num_filter, padding="same")(inp)
         outp = BatchNormalization()(outp)
-        outp = ReLU()(outp)
-        
+        outp = ReLU()(outp)       
         return outp
     
-    outp_long = inp
-    outp_short = inp
+    def create_output_long(inp, batch_size, num_filter, kernel_sizes):
+        outp = inp
+        for i in range(0, len(kernel_sizes)):
+            outp = conv_block(outp, batch_size, num_filter, kernel_sizes[i])
+        return outp
     
-    for i in range(0, len(kernel_sizes)):
-        outp_long = conv_block(outp_long, num_filter, kernel_sizes[i])
-  
-    outp_short = Conv1D(kernel_size=1, filters=num_filter, padding="same")(outp_short)
-    outp_short = BatchNormalization()(outp_short)
+    def create_output_short(inp, num_filter):
+        outp = Conv1D(kernel_size=1, filters=num_filter, padding="same")(inp)
+        outp = BatchNormalization()(outp)
+        return outp
     
+    outp_long = create_output_long(inp, batch_size, num_filter, kernel_sizes)
+    outp_short = create_output_short(inp, num_filter)
 
     outp = Add()([outp_long, outp_short])
+
+    if len(outp.shape) == 4:     
+        outp = squeeze(outp, axis=1)
+
     outp = AveragePooling1D(pool_size=pool_size, strides=pool_stride_size)(outp)
     
     return outp
 
 
-def spec_temp_block(inp):
-    outp = Permute((2, 1))(inp)
-    #outp = Spectrogram(n_dft=128, n_hop=64, image_data_format="channels_last", return_decibel_spectrogram=True)(outp)
-    #outp = melspectrogram(n_dft=128, n_hop=64)(outp)
-    #outp = Spectrogram(n_dft=128, n_hop=64)(outp)
-    outp = tf.signal.stft(outp, frame_length=128, frame_step=64)
+def spec_temp_block(inp, batch_size):
+
+    outp = tf.signal.stft(inp, frame_length=128, frame_step=64)
     outp = tf.abs(outp)
-    #outp = normalize()(outp)
-    #outp = Normalization2D(str_axis="batch")(outp)
     outp = LayerNormalization()(outp)
-    outp = Reshape((2, 64))(outp)
-    outp = GRU(64)(outp)
+    outp = Reshape((8*batch_size,65))(outp)
+    outp = GRU(65)(outp)
     outp = Flatten()(outp)
     outp = Dense(32, activation="relu", kernel_regularizer=l2(0.001))(outp)
     outp = BatchNormalization()(outp)
     
     return outp
-    
+   
 
-def net_blocks():
-    inp_res = Input(shape=(None, 624))
-    inp_spec = Input(shape=(None, 624))
+def net_blocks(batch_size):
+    inp_time0 = Input(shape=(batch_size, 624), name="input_time0")
+    inp_spec0 = Input(shape=(batch_size, 624), name="input_spec0")
+    inp_time1 = Input(shape=(batch_size, 624), name="input_time1")
+    inp_spec1 = Input(shape=(batch_size, 624), name="input_spec1")
+    inp_time2 = Input(shape=(batch_size, 624), name="input_time2")
+    inp_spec2 = Input(shape=(batch_size, 624), name="input_spec2")
     
-    outp_res = resnet_block(inp_res, num_filter=64)
-    outp_spec = spec_temp_block(inp_spec)
+    outp_time0 = resnet_block(inp_time0, batch_size=batch_size, num_filter=64)
+    outp_spec0 = spec_temp_block(inp_spec0, batch_size=batch_size)
+    outp_time1 = resnet_block(inp_time1, batch_size=batch_size, num_filter=64)
+    outp_spec1 = spec_temp_block(inp_spec1, batch_size=batch_size)
+    outp_time2 = resnet_block(inp_time2, batch_size=batch_size, num_filter=64)
+    outp_spec2 = spec_temp_block(inp_spec2, batch_size=batch_size)
+    
     for i in range(0,4):
-        outp_res = resnet_block(outp_res, num_filter=128)
-    
-    model_time = Model(inp_res, outp_res)
-    model_spec = Model(inp_spec, outp_spec)
+        outp_time0 = resnet_block(outp_time0, batch_size=batch_size, num_filter=128)
+        outp_time1 = resnet_block(outp_time1, batch_size=batch_size, num_filter=128)
+        outp_time2 = resnet_block(outp_time2, batch_size=batch_size, num_filter=128)
         
-    return model_time, model_spec, [inp_res, inp_spec]
+    model_time0 = keras.Model(inp_time0, outp_time0)#, name=model_names[0])
+    model_spec0 = keras.Model(inp_spec0, outp_spec0)#, name=model_names[0])
+    model_time1 = keras.Model(inp_time1, outp_time1)#, name=model_names[1])
+    model_spec1 = keras.Model(inp_spec1, outp_spec1)#, name=model_names[1])
+    model_time2 = keras.Model(inp_time2, outp_time2)#, name=model_names[2])
+    model_spec2 = keras.Model(inp_spec2, outp_spec2)#, name=model_names[2])
+        
+    return [model_time0, model_time1, model_time2], [model_spec0, model_spec1, model_spec2], [inp_time0, inp_time1, inp_time2], [inp_spec0, inp_spec1, inp_spec2]
 
 
-def concat_blocks(inp0, inp1, inp2, resblock):
+def concat_blocks(inp0, inp1, inp2, resblock, l_name): 
     outp = concatenate([inp0, inp1, inp2], axis=-1)
-    #input_size = np.size(outp)
     
     if resblock==True:
         outp = BatchNormalization()(outp)
-        outp = GRU(65)(outp)
+        outp = GRU(384)(outp)
     outp = BatchNormalization()(outp)
     
-    #temp_model = Model(inputs=input_size, outputs = outp)
-    #result_outp = temp_model(outp)
-    
     return  outp
-       
+      
+
 def batch(iterable, n=1):
     l = len(iterable)
     for ndx in range(0, l, n):
         yield iterable[ndx:min(ndx + n, l)] 
-'''        
-def resnet(input_size, classes):
-    #inputs = [Input(shape=np.shape(pleth0)) for i in range(0,3)]
-    inputs = Input(input_size)
-    
-    res_pleth0, spec_pleth0 = net_blocks((1, input_size(1), input_size(2)))
-    res_pleth1, spec_pleth1 = net_blocks(pleth1)
-    res_pleth2, spec_pleth2 = net_blocks(pleth2)
-    
-    concat_resnet = concat_blocks(res_pleth0, res_pleth1, res_pleth2, True)
-    concat_spec = concat_blocks(spec_pleth0, spec_pleth1, spec_pleth2, False)
-    
-    outp = Concatenate()([concat_resnet, concat_spec])
-    #outp = Flatten()(outp)
-    outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda))(outp)
-    outp = Dropout(0.25)(outp)
-    outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda))(outp) 
-    outp = Dropout(0.25)(outp)          
-    outp = Dense()(outp)    
-    final_outp = Dense(2, activation="relu")(outp)
-    
-    model = Model(inputs=inputs, outputs=final_outp)
-    #model = multi_gpu_model(model, gpus=2)
-    optimizer = optimizers.rmsprop(lr=.0001, decay=.0001)
-    model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
-    print(model.summary())
-    
-'''        
-def count_cyc(index, y):
-    nr_cycle = [np.shape(y[i])[0] for i in range(0, len(y))]
-    return sum(nr_cycle)
 
 
-
-#%%
-path_main = "E:/Uni/Master BMIT/Programmierprojekt/feat/"
+#path_main = "E:/Uni/Master BMIT/Programmierprojekt/feat/"
+path_main = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat_new/"
 files = os.listdir(path_main+"derivations/dev0")
-
 #labels = np.array([np.load(path_main+"ground_truth/nn/"+subject, allow_pickle=True) for subject in files], dtype=object)
-files = files[:25]
 
-n_splits = 2
+
+
+
+n_splits = 5
 kfold = KFold(n_splits=n_splits)
 kfold.get_n_splits(files)
+kernel_init = "he_uniform"
 
-batch_size = 1
+batch_size = 128
 l2_lambda = 0.001   
+
 
 for train_index, test_index in kfold.split(files): 
     
     train_index, val_index = train_test_split(train_index, test_size=0.2)
     train_id = [files[x] for x in train_index]
     val_id = [files[x] for x in val_index]
-    # nr_cyc_train = count_cyc(train_index, labels)
-    # nr_cyc_val = count_cyc(val_index, labels)
     
     # Generators
-    
-    generator_dev0 = DataGenerator(path_main+"derivations/dev0/", train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-    generator_dev1 = DataGenerator(path_main+"derivations/dev1/", train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-    generator_dev2 = DataGenerator(path_main+"derivations/dev2/", train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-    
-    generator_val = DataGenerator(path_main+"derivations/dev0/", val_id, path_main+"ground_truth/nn/", batch_size=len(val_id))
-    
-    model_time_dev0, model_spec_dev0, inp_dev0 = net_blocks()
-    model_time_dev1, model_spec_dev1, inp_dev1 = net_blocks()
-    model_time_dev2, model_spec_dev2, inp_dev2 = net_blocks()
-    
-    
-    '''
-    outp0_time = model_time_dev0(generator_dev0)
-    outp1_time = model_time_dev1(generator_dev1)
-    outp2_time = model_time_dev1(generator_dev2)
-    
-    outp0_spec = model_spec_dev0(generator_dev0)
-    outp1_spec = model_spec_dev1(generator_dev1)
-    outp2_spec = model_spec_dev1(generator_dev2)
-    '''
-    outp_concat_resnet = concat_blocks(model_time_dev0.output, model_time_dev1.output, model_time_dev2.output, True)
-    outp_concat_spec = concat_blocks(model_spec_dev0.output, model_spec_dev1.output, model_spec_dev2.output, False)
-    
+    generator_train = DataGenerator(path_main, train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
+    generator_val = DataGenerator(path_main, val_id, path_main+"ground_truth/nn/", batch_size=batch_size)
+       
+    models_time, models_spec, inputs_time, inputs_spec = net_blocks(batch_size)   
+    outp_concat_resnet = concat_blocks(models_time[0].output, models_time[1].output, models_time[2].output, True, l_name="reshape_concat_resnet")
+    outp_concat_spec = concat_blocks(models_spec[0].output, models_spec[1].output, models_spec[2].output, False, l_name="reshape_concat_spec")
+       
     merged = concatenate([outp_concat_resnet, outp_concat_spec], axis=-1)
-    #outp = Flatten()(outp)
-    #final_model = Model(inputs=[model_x1.input, model_x2.input, model_x3.input], outputs=merged_output)
-    merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda))(merged)
-    merged_outp = Dropout(0.25)(merged_outp)
-    merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda))(merged_outp)
-    merged_outp = Dropout(0.25)(merged_outp)
-    merged_outp = Dense(2, activation="relu")(merged_outp)
-    '''
-    final_model = Model(inputs=[model_time_dev0.input, 
-                                model_time_dev1.input, 
-                                model_time_dev2.input, 
-                                model_spec_dev0.input, 
-                                model_spec_dev1.input,
-                                model_spec_dev2.input],
-                        outputs=merged_outp)
-    '''
-    final_model = Model(inputs=[inp_dev0[0], 
-                                inp_dev1[0],
-                                inp_dev2[0],
-                                inp_dev0[1],
-                                inp_dev1[1],
-                                inp_dev2[1]],
-                        outputs=merged_outp)
-    '''
-    final_model.add(Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda)))
-    final_model.add(Dropout(0.25))
-    final_model.add(Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda)))
-    final_model.add(Dropout(0.25))
-    final_model.add(Dense(2, activation="relu"))
+    merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda), kernel_initializer=kernel_init)(merged)
+    merged_outp = Dropout(0.2)(merged_outp)
+    merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda), kernel_initializer=kernel_init)(merged_outp)
+    merged_outp = Dropout(0.2)(merged_outp)
+    merged_outp = Dense(2, activation='relu')(merged_outp)
+
+    final_model = keras.Model(inputs=[inputs_time[0], 
+                                inputs_time[1],
+                                inputs_time[2],
+                                inputs_spec[0],
+                                inputs_spec[1],
+                                inputs_spec[2]],
+                        outputs=merged_outp,
+                        name='Final_Model')
     
-    outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda))(outp)
-    outp = Dropout(0.25)(outp)
-    outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda))(outp) 
-    outp = Dropout(0.25)(outp)          
-    outp = Dense()(outp)    
-    final_outp = Dense(2, activation="relu")(outp)
-    final_model = Model(inputs=inputs, outputs=final_outp)
-    #model = multi_gpu_model(model, gpus=2)
-    '''
-    
-    optimizer = optimizers.RMSprop(lr=.0001)
+    optimizer = optimizers.RMSprop(learning_rate=0.0001)
     final_model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
-    #print(final_model.summary())
+    # print(final_model.summary())
     
-    generator_input = np.asarray([generator_dev0, generator_dev1, generator_dev2])
-    final_model.fit(generator_input, 
+    final_model.fit(generator_train, 
                     validation_data=generator_val,
                     epochs=20,
                     verbose=1)
+#%%
+def myprint(s):
+    with open('modelsummary.txt','a') as f:
+        print(s, file=f)
+
+final_model.summary(print_fn=myprint)
+#%%
+for layer in final_model.layers:
+    if layer.name == "input_time3":
+        print(layer.name, layer.output_shape)
+    elif layer.name == "conv1d_228":
+        print(layer.name, layer.input_shape)
+    else:
+        print(layer.name)
+#%% Show Input Shapes
+print("Input shapes:")
+for i, input_tensor in enumerate(final_model.inputs):
+    print(f"Input {i}: {input_tensor.shape}")
+#%% Show all layer shapes
+for layer in final_model.layers:
+    print(layer.name, layer.input_shape, layer.output_shape)
+#%% Show specfic Input/Output
+for layer in final_model.layers:
+    if layer.name == "input_time3":
+        print(layer.name, layer.output_shape)
+    elif layer.name == "conv1d_843":
+        print(layer.name, layer.input_shape)
+    else:
+        print(layer.name)
+
+
+#%%
+
+
+#for train_index, test_index in kfold.split(files): 
     
+train_index, val_index = train_test_split(train_index, test_size=0.2)
+train_id = [files[x] for x in train_index]
+val_id = [files[x] for x in val_index]
+
+# Generators
+generator_train = DataGenerator(path_main, train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
+generator_val = DataGenerator(path_main, val_id, path_main+"ground_truth/nn/", batch_size=batch_size)
+ 
 
 
-
-
-
+#%%
     
+def data_manual(datagenerator):
+  """Generates a data manual for the given datagenerator."""
+
+  print("Datagenerator parameters:")
+  for key, value in datagenerator.__dict__.items():
+    if not key.startswith("_"):
+      print(f"  {key}: {value}")
+
+  print("\nData manual:")
+  for idx in range(datagenerator.__len__()):
+    x, y = datagenerator.__getitem__(idx)
+    print(f"Batch {idx}:")
+    print(f"  x: {x}")
+    print(f"  y: {y}")
+
+
+if __name__ == "__main__":
+  datagenerator = generator_train
+  data_manual(datagenerator)
+
+
+#%%
+# Set random seed for reproducibility (if you haven't already done it)
+np.random.seed(42)
+tf.random.set_seed(42)
+
+# Create an instance of the data generator
+# Replace the arguments with appropriate values
+data_gen =  DataGenerator(path_main, train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
+# Run the generator multiple times and store the outputs
+num_runs = 5
+outputs = [data_gen.__getitem__(0) for _ in range(num_runs)]
+
+# Compare the first output with the rest to check for consistency
+consistent_output = all(np.array_equal(outputs[0][0], output[0]) and np.array_equal(outputs[0][1], output[1]) for output in outputs[1:])
+
+if consistent_output:
+    print("Generator produces the same output in multiple runs.")
+else:
+    print("Generator produces different outputs.")
+
     
     
     
