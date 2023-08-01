@@ -41,12 +41,15 @@ for i in test:
     print(len(i))
     
 #%%
+path_main = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat_new/"
+for id_ in files:
+    target = np.load(path_main+"ground_truth/nn/"+id_)
+    nan_indices = np.isnan(target).any(axis=1)
+    print(id_)
+    if np.any(nan_indices):
+        print("NaN values found in target data at indices:", np.where(nan_indices)[0])
 
-ar = np.array([0,1,2,3,4,5])
-ar = np.append(ar, [6,7,8,9])
 
-    
-    
     
     
     
