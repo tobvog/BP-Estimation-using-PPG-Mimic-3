@@ -9,6 +9,7 @@ class DataGenerator(keras.utils.Sequence):
         self.path_label = path_label
         self.list_id = list_id
         self.id_idx = 0 
+        self.nr_batches = 0
         self.batch_size = batch_size
         self.n_classes = n_classes
         self.shuffle = shuffle
@@ -21,11 +22,12 @@ class DataGenerator(keras.utils.Sequence):
 
 
     def __count_batches(self):
-        n_batches = 0
-        for sub in self.list_id:
-            n_epochs = len(np.load(self.path_main+"derivations/dev0/"+sub))
-            n_batches += int(np.ceil(n_epochs/self.batch_size))
-        return n_batches
+        if self.nr_batches == 0:
+            for nr, sub in enumerate(self.list_id):
+                print("Counting Subject no ", nr+1)
+                n_epochs = len(np.load(self.path_main+"derivations/dev0/"+sub))
+                self.nr_batches += int(np.ceil(n_epochs/self.batch_size))
+        return self.nr_batches
         
 
     def __len__(self):

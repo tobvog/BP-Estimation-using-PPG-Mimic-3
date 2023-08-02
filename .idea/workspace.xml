@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="13b48c39-e5e0-4e45-91fe-ed296420e149" name="Changes" comment="Add classical machine learning">
-      <change beforePath="$PROJECT_DIR$/DataGenerator.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/demo_make_data_nn.py" beforeDir="false" afterPath="$PROJECT_DIR$/demo_make_data_nn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resnet.py" beforeDir="false" />
+    <list default="true" id="13b48c39-e5e0-4e45-91fe-ed296420e149" name="Changes" comment="Change file structure for different training settings">
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,6 +31,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
   </component>
   <component name="RunManager" selected="Python.resnet_inp2">
@@ -83,7 +83,7 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
+      <option name="SDK_HOME" value="C:\Users\vogel\AppData\Local\Programs\Python\Python39\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
@@ -98,6 +98,11 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Python.main" />
+      <item itemvalue="Python.classical_machine_learning" />
+      <item itemvalue="Python.resnet_inp2" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.resnet_inp2" />
@@ -121,7 +126,14 @@
       <option name="project" value="LOCAL" />
       <updated>1668495296628</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Change file structure for different training settings">
+      <created>1690888303058</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1690888303058</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -137,6 +149,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Add classical machine learning" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add classical machine learning" />
+    <MESSAGE value="Change file structure for different training settings" />
+    <option name="LAST_COMMIT_MESSAGE" value="Change file structure for different training settings" />
   </component>
 </project>

@@ -74,7 +74,7 @@ def net_blocks(batch_size):
     model_time = keras.Model(inp_time, outp_time)#, name=model_names[0])
     model_spec = keras.Model(inp_spec, outp_spec)#, name=model_names[0])
         
-    return model_time, model_spec, inp_time, inp_spec
+    return model_time, model_spec, inp_time, inp_spec, outp_time, outp_spec
 
 
 def concat_blocks(inp0, inp1, inp2, resblock, l_name): 
@@ -115,12 +115,17 @@ for train_index, test_index in kfold.split(files):
     val_id = [files[x] for x in val_index]
     
     # Generators
+    print("Loading Datagenerator")
     generator_train = DataGenerator(path_main, train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
     generator_val = DataGenerator(path_main, val_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-       
-    model_time, model_spec, input_time, input_spec = net_blocks(batch_size)
-
-    merged = concatenate([model_time, model_spec], axis=-1)
+    
+    print("Creating Model")
+    model_time, model_spec, input_time, input_spec, outp_time, outp_spec = net_blocks(batch_size)
+    #print("Model_time: ", model_time.shape)
+    #print("Model_spec: ", model_spec.shape)
+    outp_time = Reshape((1, 384))(outp_time)
+    outp_time = squeeze(outp_time, axis=1)
+    merged = concatenate([outp_time, outp_spec])
     merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda), kernel_initializer=kernel_init)(merged)
     merged_outp = Dropout(0.2)(merged_outp)
     merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda), kernel_initializer=kernel_init)(merged_outp)

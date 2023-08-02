@@ -1,6 +1,6 @@
 import numpy as np
 import os
-from DataGenerator import DataGenerator
+from DataGenerator_Outp6 import DataGenerator
 
 from sklearn.model_selection import KFold, train_test_split
 from tensorflow import expand_dims, squeeze, identity
@@ -137,7 +137,8 @@ for train_index, test_index in kfold.split(files):
     models_time, models_spec, inputs_time, inputs_spec = net_blocks(batch_size)   
     outp_concat_resnet = concat_blocks(models_time[0].output, models_time[1].output, models_time[2].output, True, l_name="reshape_concat_resnet")
     outp_concat_spec = concat_blocks(models_spec[0].output, models_spec[1].output, models_spec[2].output, False, l_name="reshape_concat_spec")
-       
+    print(outp_concat_resnet.shape)  
+    print(outp_concat_spec.shape) 
     merged = concatenate([outp_concat_resnet, outp_concat_spec], axis=-1)
     merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda), kernel_initializer=kernel_init)(merged)
     merged_outp = Dropout(0.2)(merged_outp)

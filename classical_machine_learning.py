@@ -10,17 +10,22 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import mean_absolute_error
 #%%
 
-def spec_flatten(x_in, y_in):      
+def spec_flatten(x_in=None, y_in=None, only_y=False):      
     x_out, y_out = [], []
-    for sub in range(0, len(x_in)):
-        for cyc in range(0, len(x_in[sub])):
-            temp_x = x_in[sub][cyc]
+    for sub in range(0, len(y_in)):
+        for cyc in range(0, len(y_in[sub])):
+            if only_y==False:    
+                temp_x = x_in[sub][cyc]
             temp_y = y_in[sub][cyc]
             if np.isnan(temp_y[0])==False and np.isnan(temp_y[1])==False:
-                x_out.append(temp_x)
+                if only_y==False:
+                    x_out.append(temp_x)
                 y_out.append(temp_y)
+    if only_y==False:
+        return np.array(x_out, dtype=object), np.array(y_out)
+    else:
+        return np.array(y_out)
     
-    return np.array(x_out, dtype=object), np.array(y_out)
 
 def spec_flatten_y(y_in):
     y_out = []
@@ -38,20 +43,20 @@ def batch(iterable, n=1):
         yield iterable[ndx:min(ndx + n, l)]
 
 #%% Load Data
-# path = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat/"
-path= "E:/Uni/Master BMIT/Programmierprojekt/feat/"
+#path = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat_new/"
+path= "E:/Uni/Master BMIT/Programmierprojekt/feat2/"
 path2 = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/"
-files = np.array(os.listdir(path2+"feature")) 
+files = np.array(os.listdir(path+"ground_truth/nn/")) 
 
 #x = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files], dtype=object)
 #x = np.array([np.load(path+"feature/"+subject, allow_pickle=True) for subject in files], dtype=object)
-y = np.array([np.load(path+"ground_truth/ml/"+subject, allow_pickle=True) for subject in files], dtype=object)
+y = np.array([np.load(path+"ground_truth/nn/"+subject, allow_pickle=True) for subject in files], dtype=object)
 batch_size = 64
 nr_batches = int(len(y)/batch_size)
 
 #%% Settings #######################
-pers = True
-dummy = False
+pers = False
+dummy = True
 # label = 0 SBP
 # label = 1 DBP
 label = 0
@@ -70,18 +75,6 @@ for train_index, test_index in kfold.split(files):
     
     print("Number Fold: ", [nr_fold], " of ", [n_splits])
     nr_fold += 1
-    '''
-    y_train = y[train_index]
-    y_test = y[test_index]   
-    y_train = spec_flatten_y(y_train)
-    y_test = spec_flatten_y(y_test)
-    
-    #if len(y_test) == 0:
-    #    continue
-    
-    y_test = y_test[:,label]
-    y_train = y_train[:,label]
-    '''
 ########################################### 
 ###########################################   
 ###########################################    
@@ -90,9 +83,10 @@ for train_index, test_index in kfold.split(files):
         for mini_batch in batch(train_index, batch_size):
             print("Batch nr: "+str(nr_batch)+" of "+str(nr_batches))
             nr_batch += 1
-            x_train = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[mini_batch]], dtype=object)
+            #x_train = np.array([np.load(path2+"feature/"+subject, allow_pickle=True) for subject in files[mini_batch]], dtype=object)
             y_train = y[mini_batch]
-            x_train, y_train = spec_flatten(x_train, y_train)
+            #x_train, y_train = spec_flatten(x_train, y_train)
+            y_train = spec_flatten(y_in=y_train, only_y=True)
             y_train = y_train[:,label]        
        
             y_test = y[test_index]   
