@@ -1,11 +1,7 @@
 #%% Imports
 import numpy as np
 import os
-from scipy.signal import butter, sosfiltfilt, argrelextrema, welch
-from scipy.stats import entropy, skew, kurtosis
-
-import matplotlib.pyplot as plt
-from Elgendi_peak import ElgPeakDetection
+from scipy.signal import butter
 
 from Preprocessing import Preprocessing_mimic3
 

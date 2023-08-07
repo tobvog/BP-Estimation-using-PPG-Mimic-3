@@ -2,19 +2,32 @@ import numpy as np
 
  
 class ElgPeakDetection:
-    def __init__(self, data, w1_size=111, w2_size=667, a=0.02, hampel_window=3):
+    '''! Class for peak detection method by Elgendi et al.'''
+    ## @detail For detailed information: https://pubmed.ncbi.nlm.nih.gov/24167546/
+    ##
+    def __init__(self, data, w1_size=111, w2_size=667, a=0.02):
+        ## 
+        # @brief            This constructor initalizes the class.
+        # @param data       Input data with 3 channels: PPG data, Blood pressure data, sampling rate
+        # @param w1_size    Window size in ms for systolic peak duration. Default=111. 
+        # @param w2_size    Window size in ms for heart beat duration. Default=667.
+        # @param a          Parameter for optimizing offset. Default=0.02.
+        ##
         self.pleth = data[0]
         self.abp = data[1]
         self.fs = data[2]
         self.a = a
-        self.w1 = int(w1_size*self.fs*10**(-3))
-        self.w2 = int(w2_size*self.fs*10**(-3))
-        self.pleth_squared = self.squaring(self.pleth)
+        
+        self._w1 = int(w1_size*self.fs*10**(-3))
+        self._w2 = int(w2_size*self.fs*10**(-3))
+        self._pleth_squared = self.__squaring(self.pleth)
 ###############################################################################
 ###############################################################################
 ###############################################################################   
     @staticmethod
-    def squaring(pleth):
+    def __squaring(pleth):
+        ## @breif
+        ##
         result = []
         for sample in range(0, len(pleth)):
             if pleth[sample] >= 0:
@@ -28,11 +41,11 @@ class ElgPeakDetection:
 ###############################################################################
 ###############################################################################    
     @staticmethod 
-    def moving_average(self, window):
+    def __moving_average(self, window):
         if window == "w1":
-            l = int(self.w1/2)
+            l = int(self._w1/2)
         elif window == "w2":
-            l = int(self.w2/2)
+            l = int(self._w2/2)
         
         result = [] 
         for sample in range(l+1, len(self.pleth_squared)-l):
@@ -46,7 +59,7 @@ class ElgPeakDetection:
 ###############################################################################
 ############################################################################### 
     @staticmethod      
-    def correct_length1(self, ma_peak, l_w1, l_w2):
+    def __correct_length1(self, ma_peak, l_w1, l_w2):
         size_pleth = len(self.pleth)
         size_ma_peak = len(ma_peak)
         size_abp = len(self.abp)
@@ -86,7 +99,7 @@ class ElgPeakDetection:
             except:
                 return 0
                
-        thr2 = self.w1
+        thr2 = self._w1
         stat = True
         result, peaks = [], []
 
@@ -118,10 +131,10 @@ class ElgPeakDetection:
 ###############################################################################
 ###############################################################################   
     def process(self):        
-        ma_peak, l_w1 = self.moving_average(self,window="w1")
-        ma_beat, l_w2 = self.moving_average(self,window="w2")
+        ma_peak, l_w1 = self.__moving_average(self,window="w1")
+        ma_beat, l_w2 = self.__moving_average(self,window="w2")
         
-        pleth_mod, abp_mod, ma_peak_mod, pleth_square_mod = self.correct_length1(self, ma_peak, l_w1, l_w2)
+        pleth_mod, abp_mod, ma_peak_mod, pleth_square_mod = self.__correct_length1(self, ma_peak, l_w1, l_w2)
         
         boi = self.boi(pleth_square_mod, ma_peak_mod, ma_beat)
         

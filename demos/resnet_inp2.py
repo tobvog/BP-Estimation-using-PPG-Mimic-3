@@ -2,16 +2,14 @@ import numpy as np
 import os
 from DataGenerator_Outp2 import DataGenerator
 
+from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import KFold, train_test_split
-from tensorflow import expand_dims, squeeze, identity
-from keras.utils.vis_utils import plot_model
-from tensorflow.keras.layers import Input, Conv1D, Reshape, LayerNormalization, ReLU, BatchNormalization,Add, AveragePooling1D, GlobalAveragePooling1D, Flatten, Dense, GRU, concatenate, Permute, Dropout 
+from tensorflow import  squeeze
+from tensorflow.keras.layers import Input, Conv1D, Reshape, LayerNormalization, ReLU, BatchNormalization, Add, AveragePooling1D, Flatten, Dense, GRU, concatenate, Dropout 
 from keras.regularizers import l2
-from keras import optimizers, Sequential
+from keras import optimizers
 from tensorflow import keras
 import tensorflow as tf
-
-
 
 keras.backend.clear_session()
 
@@ -92,6 +90,7 @@ def batch(iterable, n=1):
     l = len(iterable)
     for ndx in range(0, l, n):
         yield iterable[ndx:min(ndx + n, l)]
+        
 
 
 path_main = "E:/Uni/Master BMIT/Programmierprojekt/feat2/"
@@ -104,26 +103,27 @@ kfold = KFold(n_splits=n_splits)
 kfold.get_n_splits(files)
 kernel_init = "he_uniform"
 
-batch_size = 128
+batch_size = 1028
 l2_lambda = 0.001   
 
-
-for train_index, test_index in kfold.split(files): 
+all_mae_sbp, all_mae_dbp = [], []
+for train_index, test_index in kfold.split(files[:20]): 
     
     train_index, val_index = train_test_split(train_index, test_size=0.2)
     train_id = [files[x] for x in train_index]
     val_id = [files[x] for x in val_index]
+    test_id = [files[x] for x in test_index]
     
     # Generators
     print("Loading Datagenerator")
-    generator_train = DataGenerator(path_main, train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-    generator_val = DataGenerator(path_main, val_id, path_main+"ground_truth/nn/", batch_size=batch_size)
+    generator_train = DataGenerator(path_main, train_id, batch_size=batch_size)
+    generator_val = DataGenerator(path_main, val_id, batch_size=batch_size)
+    generator_test = DataGenerator(path_main, test_id, batch_size=batch_size)
+
     
     print("Creating Model")
     model_time, model_spec, input_time, input_spec, outp_time, outp_spec = net_blocks(batch_size)
-    #print("Model_time: ", model_time.shape)
-    #print("Model_spec: ", model_spec.shape)
-    outp_time = Reshape((1, 384))(outp_time)
+    outp_time = Reshape((1, 3968))(outp_time)
     outp_time = squeeze(outp_time, axis=1)
     merged = concatenate([outp_time, outp_spec])
     merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda), kernel_initializer=kernel_init)(merged)
@@ -143,99 +143,37 @@ for train_index, test_index in kfold.split(files):
     
     final_model.fit(generator_train, 
                     validation_data=generator_val,
-                    epochs=20,
+                    epochs=1,
                     verbose=1)
-'''
-#%%
-def myprint(s):
-    with open('modelsummary.txt','a') as f:
-        print(s, file=f)
-
-final_model.summary(print_fn=myprint)
-#%%
-for layer in final_model.layers:
-    if layer.name == "input_time3":
-        print(layer.name, layer.output_shape)
-    elif layer.name == "conv1d_228":
-        print(layer.name, layer.input_shape)
-    else:
-        print(layer.name)
-#%% Show Input Shapes
-print("Input shapes:")
-for i, input_tensor in enumerate(final_model.inputs):
-    print(f"Input {i}: {input_tensor.shape}")
-#%% Show all layer shapes
-for layer in final_model.layers:
-    print(layer.name, layer.input_shape, layer.output_shape)
-#%% Show specfic Input/Output
-for layer in final_model.layers:
-    if layer.name == "input_time3":
-        print(layer.name, layer.output_shape)
-    elif layer.name == "conv1d_843":
-        print(layer.name, layer.input_shape)
-    else:
-        print(layer.name)
-
-
-#%%
-
-
-#for train_index, test_index in kfold.split(files): 
     
-train_index, val_index = train_test_split(train_index, test_size=0.2)
-train_id = [files[x] for x in train_index]
-val_id = [files[x] for x in val_index]
+    # y_pred = final_model.predict(generator_test)
+    # y_true = np.array([np.load(path_main+"ground_truth/nn/"+subject, allow_pickle=True) for subject in test_id])
+    all_pred = []
+    all_true = []
+    for batch_index in range(generator_test.__len__()):
+        print(batch_index)
+        batch_data, batch_true_labels = generator_test.__getitem__(batch_index)
 
-# Generators
-generator_train = DataGenerator(path_main, train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-generator_val = DataGenerator(path_main, val_id, path_main+"ground_truth/nn/", batch_size=batch_size)
- 
+        batch_pred = final_model.predict(batch_data, verbose=0)
+        all_pred.append(batch_pred)
+        sbp_mean = np.mean(batch_true_labels[:,0])
+        dbp_mean = np.mean(batch_true_labels[:,1])
+        all_true.append(np.array([sbp_mean, dbp_mean]))
 
+    all_pred = np.concatenate(all_pred, axis=0)
+    all_true = np.array(all_true)
 
-#%%
-    
-def data_manual(datagenerator):
-  """Generates a data manual for the given datagenerator."""
+    mae_sbp = mean_absolute_error(all_pred[:,0], all_true[:,0])
+    mae_dbp = mean_absolute_error(all_pred[:,1], all_true[:,1])
 
-  print("Datagenerator parameters:")
-  for key, value in datagenerator.__dict__.items():
-    if not key.startswith("_"):
-      print(f"  {key}: {value}")
+    all_mae_sbp.append(mae_sbp)
+    all_mae_dbp.append(mae_dbp)
 
-  print("\nData manual:")
-  for idx in range(datagenerator.__len__()):
-    x, y = datagenerator.__getitem__(idx)
-    print(f"Batch {idx}:")
-    print(f"  x: {x}")
-    print(f"  y: {y}")
-
-
-if __name__ == "__main__":
-  datagenerator = generator_train
-  data_manual(datagenerator)
+mae_sbp_mean = np.mean(all_mae_sbp)
+mae_dbp_mean = np.mean(all_mae_dbp)
 
 
-#%%
-# Set random seed for reproducibility (if you haven't already done it)
-np.random.seed(42)
-tf.random.set_seed(42)
 
-# Create an instance of the data generator
-# Replace the arguments with appropriate values
-data_gen =  DataGenerator(path_main, train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-# Run the generator multiple times and store the outputs
-num_runs = 5
-outputs = [data_gen.__getitem__(0) for _ in range(num_runs)]
-
-# Compare the first output with the rest to check for consistency
-consistent_output = all(np.array_equal(outputs[0][0], output[0]) and np.array_equal(outputs[0][1], output[1]) for output in outputs[1:])
-
-if consistent_output:
-    print("Generator produces the same output in multiple runs.")
-else:
-    print("Generator produces different outputs.")
-'''
-    
     
     
 

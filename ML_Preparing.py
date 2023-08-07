@@ -1,15 +1,21 @@
-'''
-Class for machine learning
-
-'''
-#%% Imports
 import numpy as np
 
 from scipy.signal import argrelextrema, welch
 from scipy.stats import entropy, skew, kurtosis
-#%%
+
+## @brief Class for the preparing of the data for machine learning.  
+## @details This class provides methods to prepare data for machine learning by Slapnicar et al.
 class ML_Preparing:   
     def __init__(self, pleth_cyc=None, abp_cyc=None, pleth=None, abp=None, idx_peak=None, fs=125):
+        ##
+        # @brief This constructor initalizes the ML_Preparing object.
+        # @param pleth_cyc      PPG input data as cycle. Default=None.
+        # @param abp_cyc        Blood pressure input data as cycle. Default=None.              
+        # @param pleth          PPG input data as one time line per subject. Default=None. 
+        # @param abp            Blood pressure input data as one time line per subject. Default=None.
+        # @param idx_peak       Array with indices of peaks. The Peaks represent the systolic blood pressure. Default=None.
+        # @param fs             Sampling rate of input data. Default=125 
+        ##
         self.pleth_cyc = pleth_cyc
         self.abp_cyc = abp_cyc
         self.pleth = pleth
@@ -20,6 +26,10 @@ class ML_Preparing:
 ###############################################################################
 ###############################################################################        
     def derivation2(self):
+        ##
+        # @brief    This method calculate the first and second derivation of one subject.            
+        # @return   The first and second derivation of all cycle of one subject
+        ##
         dev1, dev2 = [], []
         
         for cycle in self.pleth_cyc:
@@ -36,6 +46,10 @@ class ML_Preparing:
 ###############################################################################
 ###############################################################################        
     def derivation(self):
+        ##
+        # @brief    This method calculate the first derivation of one subject.            
+        # @return   The first derivation of all cycle of one subject
+        ##
         dev1 = []
         
         for cycle in self.pleth_cyc:
@@ -43,24 +57,32 @@ class ML_Preparing:
             dev1.append(cyc_dev1)
             
         return np.array(dev1, dtype=object)
-
+    
 ###############################################################################
 ###############################################################################
 ###############################################################################
-    def extract_feat(self, dev1):      
-        def find_dianotch(data, data_diff):
-            try:
-                max_ = np.argwhere(data == max(data))
-                if min(data_diff[max_[0,0]+2:int(len(data)*0.75)]) < 0.005:
-                    result = np.squeeze(np.argwhere(data_diff == min(data_diff[max_[0,0]+2:len(data)-20])))
-                else:           # TEST IF ITS NECESSARY
-                    result = 0  #        !!!!    
-            except:
-                result = 0               
-            return result
+    def __find_dianotch(data, data_diff):
+        try:
+            max_ = np.argwhere(data == max(data))
+            if min(data_diff[max_[0,0]+2:int(len(data)*0.75)]) < 0.005:
+                result = np.squeeze(np.argwhere(data_diff == min(data_diff[max_[0,0]+2:len(data)-20])))
+            else:           
+                result = 0   
+        except:
+            result = 0               
+        return result
+    
+###############################################################################
+###############################################################################
+###############################################################################
+    def extract_feat(self, dev1): 
+        ##
+        # @brief        This method calculate all necessary feature for the classical machine learning by Slapnicar et al.
+        # @param dev1   The first derivation of all cycles of one subject.          
+        # @return       Feature array.
+        ##
         
         result = []
-
         for cyc in range(0, len(self.pleth_cyc)):
             #print("Cycle: "+str(cyc))
             cycle = self.pleth_cyc[cyc]
@@ -87,7 +109,7 @@ class ML_Preparing:
             else:    
                 t_steepest = dev1_peaks[0][0]
             # Time from cycle start to second peak in PPG’ (dicrotic notch)       
-            t_dianotch = find_dianotch(cycle, cycle_dev1)
+            t_dianotch = self.__find_dianotch(cycle, cycle_dev1)
                 
             # Time from systolic peak to dicrotic notch
             if t_dianotch != 0:
@@ -167,14 +189,21 @@ class ML_Preparing:
                              psd1, psd2, psd3, int(freq1), int(freq2), int(freq3), energy, entropy_,
                              bin0, bin1, bin2, bin3, bin4, bin5, bin6, bin7, bin8, bin9, 
                              skewness, kurtosis_], dtype=object)
-            #temp_sub = np.append(temp_sub, feat)
+            
             result.append(feat)
          
         return np.array(result, dtype=object)
 ###############################################################################
 ###############################################################################
 ###############################################################################
+
     def extract_sbp_dbp(self, window, pad, nn_epoch=False):
+        ##
+        # @brief            This method extract the systolic and diastolic blood pressure of the blood pressure data. Additionally its able to extract cycles for the resnet by slapnicar et al.
+        # @param window     Used window size in seconds.    
+        # @pad              Number of sample after the systolic blood pressure which should be used to search for diastolic blood pressure.
+        # @return           Array of ground truth data for blood pressure and array of cycles.
+        ##
         data = self.abp
         result = []
         distance = int((window*self.fs)/2)
@@ -231,90 +260,7 @@ class ML_Preparing:
             return np.array(result), np.array(pleth_cyc)
         else:          
             return np.array(result)
-                        
-###############################################################################
-###############################################################################
-############################################################################### 
-'''     
-    def extract_sbp_dbp(self, abp, idx_sbp, idx_dbp):       
-        def loc_extrem(data, n):
-            loc_max = np.sort(argrelextrema(data, np.greater))
-            loc_min = np.sort(argrelextrema(data, np.less))
-            
-            if len(loc_max[0]) > n:
-                sbp = np.mean(data[loc_max[0, -n:]])
-            else:
-                sbp = np.mean(data[loc_max[0]]) 
-            if len(loc_min[0]) > n:
-                dbp = np.mean(data[loc_min[0, -n:]])
-            else:
-                dbp = np.mean(data[loc_min[0]])
-            
-            return sbp, dbp
-               
-        result_nn, result_ml = [], []
-        for sub in range(0, len(peak_idx)):
-            #print(sub)
-            subject_nn, subject_ml = [], []
-            for idx in (peak_idx[sub]):
-                #print(cyc)
-                temp_nn = abp[sub][int(idx-self.fs*2.5):int(idx+self.fs*2.5)]
-                temp_ml = abp[sub][int(idx-self.fs):int(idx+self.fs)]
-                
-                sbp_nn, dbp_nn = loc_extrem(temp_nn, 5)
-                sbp_ml, dbp_ml = loc_extrem(temp_ml, 2)
-                
-                subject_nn.append([sbp_nn, dbp_nn])
-                subject_ml.append([sbp_ml, dbp_ml])
-            result_nn.append(subject_nn)
-            result_ml.append(subject_ml)
-
-        return np.array(result_nn, dtype=object), np.array(result_ml, dtype=object)
-'''
-###############################################################################
-###############################################################################
-###############################################################################     
-# def get_segments(self, path):
-#     result = []
-#     for extra in self.files_raw:
-#         input_ = np.load(path+extra, allow_pickle=True)
-#         pleth = input_[1, 1]
-#         # Only for testing
-#         data[np.isnan(data)] = 0
-
-#         seg_length = 5*self.fs
-
-#         temp = []
-#         for seg in range(0, len(data), seg_length):
-#             temp.append(data[seg_length-seg:seg])
-
-#         result.append(temp)
-#     return np.array(result)
-###############################################################################
-###############################################################################
-###############################################################################   
-'''
-    def reconstruct_data(self):
-        re_pleth, re_abp, all_peak_idx = [], [], []
-    
-        for sub in range(0, len(self.pleth)):
-            print("Subject ",sub+1," of ",len(self.pleth)) 
-            temp_pleth, temp_abp, temp_idx = np.array([]), np.array([]), np.array([[]])
-            for cyc in range(0, len(self.pleth[sub])):
-                cycle_abp = self.abp[sub][cyc]
-                cycle_pleth = self.pleth[sub][cyc]
-                peak_idx = np.squeeze(np.where(cycle_pleth == max(cycle_pleth)))+len(temp_pleth)
-    
-                temp_abp = np.append(temp_abp, cycle_abp)
-                temp_pleth = np.append(temp_pleth, cycle_pleth)
-                temp_idx = np.append(temp_idx, peak_idx)
-            
-            re_abp.append(temp_abp)
-            re_pleth.append(temp_pleth)
-            all_peak_idx.append(temp_idx)
-            
-        return np.array(re_pleth, dtype=object), np.array(re_abp, dtype=object), np.array(all_peak_idx, dtype=object)
-'''       
+                          
         
         
         

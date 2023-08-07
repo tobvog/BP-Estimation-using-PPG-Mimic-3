@@ -1,13 +1,12 @@
 import numpy as np
 import os
-from DataGenerator_Outp6 import DataGenerator
+from DataGenerator.DataGenerator_Outp6 import DataGenerator
 
 from sklearn.model_selection import KFold, train_test_split
-from tensorflow import expand_dims, squeeze, identity
-from keras.utils.vis_utils import plot_model
-from tensorflow.keras.layers import Input, Conv1D, Reshape, LayerNormalization, ReLU, BatchNormalization,Add, AveragePooling1D, GlobalAveragePooling1D, Flatten, Dense, GRU, concatenate, Permute, Dropout 
+from tensorflow import squeeze
+from tensorflow.keras.layers import Input, Conv1D, Reshape, LayerNormalization, ReLU, BatchNormalization,Add, AveragePooling1D, Flatten, Dense, GRU, concatenate, Dropout 
 from keras.regularizers import l2
-from keras import optimizers, Sequential
+from keras import optimizers
 from tensorflow import keras
 import tensorflow as tf
 
@@ -111,8 +110,6 @@ def batch(iterable, n=1):
 path_main = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat_new/"
 files = os.listdir(path_main+"derivations/dev0")
 #labels = np.array([np.load(path_main+"ground_truth/nn/"+subject, allow_pickle=True) for subject in files], dtype=object)
-
-
 
 
 n_splits = 5
