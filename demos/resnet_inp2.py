@@ -8,6 +8,7 @@ from tensorflow import  squeeze
 from tensorflow.keras.layers import Input, Conv1D, Reshape, LayerNormalization, ReLU, BatchNormalization, Add, AveragePooling1D, Flatten, Dense, GRU, concatenate, Dropout 
 from keras.regularizers import l2
 from keras import optimizers
+from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow import keras
 import tensorflow as tf
 
@@ -93,8 +94,8 @@ def batch(iterable, n=1):
         
 
 
-path_main = "E:/Uni/Master BMIT/Programmierprojekt/feat2/"
-#path_main = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat_new/"
+#path_main = "E:/Uni/Master BMIT/Programmierprojekt/feat2/"
+path_main = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat_new/"
 files = os.listdir(path_main+"derivations/dev0")
 #labels = np.array([np.load(path_main+"ground_truth/nn/"+subject, allow_pickle=True) for subject in files], dtype=object)
 
@@ -137,14 +138,20 @@ for train_index, test_index in kfold.split(files[:20]):
                             outputs=merged_outp,
                             name='Final_Model')
     
+    
+    
+    
     optimizer = optimizers.RMSprop(learning_rate=0.0001)
+    
+    es = EarlyStopping(monitor="mae", patience=5)
     final_model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
     # print(final_model.summary())
     
     final_model.fit(generator_train, 
                     validation_data=generator_val,
                     epochs=1,
-                    verbose=1)
+                    verbose=1, 
+                    callbacks=[es])
     
     # y_pred = final_model.predict(generator_test)
     # y_true = np.array([np.load(path_main+"ground_truth/nn/"+subject, allow_pickle=True) for subject in test_id])
