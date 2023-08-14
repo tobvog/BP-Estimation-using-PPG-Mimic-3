@@ -1,10 +1,15 @@
 import numpy as np
-import pandas as pd
-
-from scipy.signal import butter, sosfiltfilt, medfilt
+from scipy.signal import sosfiltfilt, medfilt
+## @brief This class realizes the prepocessing of the data. 
+## @details This class realizes the prepocessing of the data. Additionally this class is used to extract cycles for the blood pressure estimation by Slapnicar et al.
 
 class Preprocessing_mimic3:
     def __init__(self, data, sos):
+        ##
+        # @brief        This constructor initalizes the DataGenerator object.
+        # @param data   Input data with 3 channels: PPG data[0], Blood pressure data[1], sampling rate[2].
+        # @param sos    Array of second-order filter coefficients.
+        ##
         self.pleth = data[0]
         self.abp =data[1]
         self.fs = data[2]
@@ -14,28 +19,26 @@ class Preprocessing_mimic3:
 ###############################################################################
 ###############################################################################
     def get_obj(self):
+        ## 
+        # @brief    This method returns the object of the class.
+        # @return   Object of this class.
+        ##
         return self.pleth, self.abp, self.fs
     
 ###############################################################################
 ###############################################################################
 ###############################################################################
-    def design_filt(self, lowcut=0.5, highcut=8, order=4):
-        nyq = 0.5 * self.fs
-        low = lowcut / nyq
-        high = highcut / nyq
-        sos = butter(order, [low, high], btype='band', output="sos") 
-        return sos
-    
-###############################################################################
-###############################################################################
-###############################################################################
     def filt_freq(cls):
+        ## @brief    This method filters the frequencies of the ppg object.
+        ##
         cls.pleth = sosfiltfilt(cls.sos, cls.pleth)
         
 ###############################################################################
 ###############################################################################
 ###############################################################################
     def scaling(cls):
+        ## @brief    This method standardize the ppg object.
+        ##
         mean = np.nanmean(cls.pleth)
         std = np.nanstd(cls.pleth)
         cls.pleth = (cls.pleth-mean)/std
@@ -44,6 +47,8 @@ class Preprocessing_mimic3:
 ###############################################################################
 ###############################################################################  
     def change_nan(cls):
+        ## @brief    This method change NaN values of the ppg object to mean (less than 3 in a row) or zero.
+        ##
         data = cls.pleth
         result = data
         
@@ -62,22 +67,24 @@ class Preprocessing_mimic3:
 ###############################################################################
 ###############################################################################
 ###############################################################################
-    def filt_hampel(self, data, hampel_window=3):
-        df = pd.Series(data)
-        result  = hampel(df, hampel_window, n=3, imputation=True)
-        
-        return result
-    
-###############################################################################
-###############################################################################
-###############################################################################
     def filt_median(cls, k_size=3):
+        ##
+        # @brief            This method applies a median filter to the ppg object.
+        # @param k_size     Window size of the median filter. Default=3
+        ##
         cls.pleth = medfilt(cls.pleth, k_size)    
         
 ###############################################################################
 ###############################################################################
 ###############################################################################     
     def detect_flat(self, data, edge_lines=0.1, edge_peaks=0.05):
+        ##
+        # @brief            This method detects same values (flat propertys) in a row. 
+        # @param data       2 channel array with the cycles of ppg[0] and blood pressure[1].
+        # @param edge_line  Limit of percentage of ordinary detected flats.
+        # @param edge_peaks Limit of percentage of detected flats as peaks.
+        # @return           Percentage of both flats and indices of cycles with flats. Additionally a bool value if subject passed or not.
+        ##
         flat_lines, flat_peaks = [], []
         pleth = data[0]
         abp = data[1]
@@ -114,9 +121,7 @@ class Preprocessing_mimic3:
             fquote_lines = flat_lines.count(True)/len(flat_lines)
             fquote_peaks = flat_peaks.count(True)/len(flat_peaks)
             
-          
-        fquote_lines = flat_lines.count(True)/len(flat_lines)
-        fquote_peaks = flat_peaks.count(True)/len(flat_peaks)
+        
         print("Lines: "+str(fquote_lines))
         print("Peaks: "+str(fquote_peaks))
     
@@ -131,7 +136,12 @@ class Preprocessing_mimic3:
 ###############################################################################
 ###############################################################################      
     def segment_cycles(self, peak_idx, pad):
-        
+        ##
+        # @brief            This method segments cycles out of the timeseries. 
+        # @param peak_idx   Indices of peaks of on subject.       
+        # @param pad        Number of samples before and after peak for detect optimum cycle edges.
+        # @return           Cycle of ppg and blood pressure signal.
+        ##
         cycle_pleth, cycle_abp = [],[]
         for i in range(0, len(peak_idx)):
             temp_cyc1 = self.pleth[(peak_idx[i]-pad[0]):peak_idx[i]]
@@ -152,7 +162,12 @@ class Preprocessing_mimic3:
 ###############################################################################
 ###############################################################################
     def segment_cycles_nn(self, peak_idx, pleth):
-        
+        ##
+        # @brief            This method segments cycles out of the timeseries for the resnet training of Slapnicar blood pressure estimation. 
+        # @param peak_idx   Indices of peaks of on subject.       
+        # @param pleth      PPG timeseries of one subject.
+        # @return           Cycles of on subject and related peaks. 
+        ##
         t = int(self.fs*2.5)
         dev1 = np.diff(pleth)
         dev2 = np.diff(dev1)

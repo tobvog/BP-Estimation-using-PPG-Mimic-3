@@ -2,16 +2,18 @@ import numpy as np
 import os
 from ML_Preparing import ML_Preparing
 
-files = os.listdir("E:/Uni/Master BMIT/Programmierprojekt/feat/derivations/peaks/")  
+#files = os.listdir("E:/Uni/Master BMIT/Programmierprojekt/feat/derivations/peaks/")  
     
-path_time = "E:/Uni/Master BMIT/Programmierprojekt/passed_subjects2/"
-path_peak = "E:/Uni/Master BMIT/Programmierprojekt/feat/derivations/peaks/"
+#path_time = "E:/Uni/Master BMIT/Programmierprojekt/passed_subjects2/"
+path_time = "D:/MIMICIII_Database/preprocessed_data_slapnicar/"
+#path_peak = "E:/Uni/Master BMIT/Programmierprojekt/feat/derivations/peaks/"
+path_peak = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/peaks/"
 add_time = "preprocessed_data/"
 files = os.listdir(path_peak)  
-target_path = "E:/Uni/Master BMIT/Programmierprojekt/feat2/"   
+target_path = "D:/MIMICIII_Database/feat/"   
 
 
-for no, sub in enumerate(files):
+for no, sub in enumerate(files[:50]):
     print("Sub no "+str(no+1)+" of "+str(len(files)))
     
     peaks = np.load(path_peak+sub)
@@ -41,13 +43,22 @@ for i in test:
     print(len(i))
     
 #%%
-path_main = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat_new/"
+#path_main = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat_new/"
+path_main = "D:/MIMICIII_Database/feat/"
+files = os.listdir(path_main+"/derivations/dev0/")
 for id_ in files:
     target = np.load(path_main+"ground_truth/nn/"+id_)
     nan_indices = np.isnan(target).any(axis=1)
     print(id_)
     if np.any(nan_indices):
         print("NaN values found in target data at indices:", np.where(nan_indices)[0])
+        os.remove(path_main+"ground_truth/nn/"+id_)
+        os.remove(path_main+"derivations/dev0/"+id_)
+        os.remove(path_main+"derivations/dev1/"+id_)
+        os.remove(path_main+"derivations/dev2/"+id_)
+        
+
+
 
 
     

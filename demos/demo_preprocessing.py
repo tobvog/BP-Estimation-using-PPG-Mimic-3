@@ -1,4 +1,4 @@
-#%% Imports
+# Imports
 import numpy as np
 import os
 from scipy.signal import butter
@@ -14,38 +14,50 @@ def design_filt(fs=125, lowcut=0.5, highcut=8, order=4):
     
     return sos
 
-#%%
-#path = "D:/MIMICIII_Database/segmented_data_slapnicar/"
-path = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/segmented_data/"
-arr = os.listdir(path)    
-files = [x for x in arr if x.endswith('.npy')]
+# Path of the first segmented data
+path_main = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/segmented_data/"
+# Target path
+path_target = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/preprocessed_data"
 
-nr_sub = len(files)
+ids = os.listdir(path_main) 
+# Necessary subset of subject ids 
+# ids = ids[:50]  
+
 sos = design_filt()
-for i in range(0,nr_sub):
-    print('Loading File Number: '+str(i+1))
-    data = np.load(path+files[i], allow_pickle=True)
-    data_mod = [data[0,1], data[1,1], data[0,2]]
-    
-    preprocess = Preprocessing_mimic3(data, sos)
-    print("Step 1/4: change_nan")
-    preprocess.change_nan()
-    #scaling
-    print("Step 2/4: scaling")
-    preprocess.scaling()
-    # frequency filt
-    print("Step 3/4: filtering(frequency)")
-    preprocess.filt_freq()
-    # hampelfilt
-    print("Step 4/4: filtering(median)")
-    preprocess.filt_median()
-    
-    pleth, abp, fs = preprocess.get_obj()
 
-    path_extern = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/preprocessed_data"
-    name = files[i]
-    np.save(path_extern+name, [pleth, abp, fs])
-
+if __name__=="__main__":
+    for i in range(0,len(ids)):
+        
+        # Load data
+        print('Loading File Number: '+str(i+1))
+        data = np.load(path_main+ids[i], allow_pickle=True)
+        data = [data[0,1], data[1,1], data[0,2]]
+        
+        # Initialize preprocessing class
+        preprocess = Preprocessing_mimic3(data, sos)
+        
+        # Replace NaN values
+        print("Step 1/4: change_nan")
+        preprocess.change_nan()
+        
+        # Scaling
+        print("Step 2/4: scaling")
+        preprocess.scaling()
+        
+        # Frequency filter
+        print("Step 3/4: filtering(frequency)")
+        preprocess.filt_freq()
+        
+        # Median filter
+        print("Step 4/4: filtering(median)")
+        preprocess.filt_median()
+        
+        # Get object of the class
+        pleth, abp, fs = preprocess.get_obj()
+        
+        print("|------------------------------|")
+        # In order to save the data, the following should not be commented
+        # np.save(path_target+ids[i], [pleth, abp, fs])
 
 
 

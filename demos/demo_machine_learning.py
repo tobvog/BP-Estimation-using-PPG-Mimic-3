@@ -6,9 +6,10 @@ from Classical_ML import Classical_ML
 
 #%% Load Data
 path= "E:/Uni/Master BMIT/Programmierprojekt/feat/"
-files = np.array(os.listdir(path+"ground_truth/nn/")) 
-y = np.array([np.load(path+"ground_truth/nn/"+subject, allow_pickle=True) for subject in files], dtype=object)
+files = np.array(os.listdir(path+"ground_truth/ml/")) 
+y = np.array([np.load(path+"ground_truth/ml/"+subject, allow_pickle=True) for subject in files], dtype=object)
 n_splits = 10
+# label=0 -> sbp; label=1 -> dbp
 label = 0
 
 if __name__ == "__main__":
@@ -22,7 +23,7 @@ if __name__ == "__main__":
         print("Number Fold: ", [nr_fold], " of ", [n_splits])
         nr_fold += 1
         
-        mae = ml.rfregression(files, y, train_index, test_index, path, label)
+        mae = ml.rfregression(files, y, train_index, test_index, path, batch_size=1, label=label)
         
         all_mae.append(mae)
         

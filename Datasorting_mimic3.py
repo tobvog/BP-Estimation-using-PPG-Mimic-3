@@ -1,9 +1,10 @@
 import numpy as np
 import os 
 import wfdb
+## @brief Class for segmenting relevant data in respect to the paper of Slapnicar
+##
 
 class Datasorting_mimic3:
-    '''! Class for segmenting relevant data in respect to the paper of Slapnicar'''
     def __init__(self, path1="D:/MIMICIII_Database/mimic3wdb-1.0.physionet.org/"):
         ## 
         # @brief This constructor initalizes the class.

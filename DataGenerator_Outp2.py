@@ -1,11 +1,9 @@
 import numpy as np
-#import tensorflow.keras as keras
 from tensorflow.keras.utils import Sequence
-
+## @brief Datagenerator for 2 equal outputs.  
+## @details This Datagenerator can be used for big data which would overload the RAM.  
 
 class DataGenerator(Sequence):
-    '''! Datagenerator for big data using Keras for 2 equal outputs.'''
-
     def __init__(self, path_main, list_id, batch_size, n_sample=624, n_classes=2, shuffle=True):
         ##
         # @brief This constructor initalizes the DataGenerator object.
@@ -24,12 +22,12 @@ class DataGenerator(Sequence):
         self.shuffle = shuffle
         self.n_sample = n_sample
         
-        ## @brief Index of the actual ID from the parameter list_id. 
-        ##
-        self._id_idx = 0     
         ## @brief Total number of batches. 
         ##        
         self._nr_batches = 0 
+        ## @brief Index of the actual ID from the parameter list_id. 
+        ##
+        self._id_idx = 0     
         ## @brief Last index of periods of actual subject.
         ##
         self._last_idx = 0
@@ -38,17 +36,18 @@ class DataGenerator(Sequence):
         self._dev0 = np.load(self.path_main+"derivations/dev0/"+self.list_id[0], allow_pickle=True)
         ## @brief Target data of actual subject.
         ##
-        self._target = np.load(self.path_main+"ground_truth/nn/"+self.list_id[self._id_idx])
+        self._target = np.load(self.path_main+"ground_truth/nn/"+self.list_id[0])
         self.on_epoch_end()
 
+    
     def __count_batches(self):
         ##
         # @brief    This method count the total number of batches.
         # @return   Total number of batches.
         ##
         if self._nr_batches == 0:
+            print("Counting Subjects")
             for nr, sub in enumerate(self.list_id):
-                print("Counting Subject no ", nr+1)
                 n_epochs = len(np.load(self.path_main+"derivations/dev0/"+sub))
                 self._nr_batches += int(np.ceil(n_epochs/self.batch_size))
         return self._nr_batches
@@ -102,6 +101,7 @@ class DataGenerator(Sequence):
                     self._last_idx = 0
                     self._id_idx += 1 
                     self.__load_data()
+                    break
             
             elif i0==self.batch_size-1:
                 x1[i0] = self._dev0[i]
@@ -124,7 +124,7 @@ class DataGenerator(Sequence):
         # @brief This method loads data of the next subject.
         ##      
         self._dev0 = np.load(self.path_main+"derivations/dev0/"+self.list_id[self._id_idx], allow_pickle=True)
-        self._target = np.load(self.path_label+self.list_id[self._id_idx])
+        self._target = np.load(self.path_main+"ground_truth/nn/"+self.list_id[self._id_idx])
             
 
 

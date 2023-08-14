@@ -61,6 +61,7 @@ class ML_Preparing:
 ###############################################################################
 ###############################################################################
 ###############################################################################
+    @staticmethod
     def __find_dianotch(data, data_diff):
         try:
             max_ = np.argwhere(data == max(data))
@@ -197,7 +198,7 @@ class ML_Preparing:
 ###############################################################################
 ###############################################################################
 
-    def extract_sbp_dbp(self, window, pad, nn_epoch=False):
+    def extract_sbp_dbp(self, window, pad, epoch=False):
         ##
         # @brief            This method extract the systolic and diastolic blood pressure of the blood pressure data. Additionally its able to extract cycles for the resnet by slapnicar et al.
         # @param window     Used window size in seconds.    
@@ -213,8 +214,8 @@ class ML_Preparing:
             main_p = self.idx_peak[i] 
             idx_min = main_p-distance
             idx_max = main_p+distance
-            
-            if len(self.pleth[idx_min:idx_max]) != 624:
+                        
+            if len(self.pleth[idx_min:idx_max]) != 624 and epoch==True:
                 continue
             
             status = "forward"
@@ -252,11 +253,11 @@ class ML_Preparing:
             
             result.append([sbp, dbp])
             
-            if nn_epoch==True:
+            if epoch==True:
                 pleth_cyc.append(self.pleth[idx_min:idx_max])
 
                        
-        if nn_epoch==True:
+        if epoch==True:
             return np.array(result), np.array(pleth_cyc)
         else:          
             return np.array(result)

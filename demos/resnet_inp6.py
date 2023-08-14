@@ -1,18 +1,24 @@
+#---------------------------------------------------------------------------------------------------------------------
+# Imports
+#---------------------------------------------------------------------------------------------------------------------
 import numpy as np
 import os
-from DataGenerator.DataGenerator_Outp6 import DataGenerator
+from DataGenerator_Outp2 import DataGenerator
 
+from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import KFold, train_test_split
-from tensorflow import squeeze
-from tensorflow.keras.layers import Input, Conv1D, Reshape, LayerNormalization, ReLU, BatchNormalization,Add, AveragePooling1D, Flatten, Dense, GRU, concatenate, Dropout 
+from tensorflow import  squeeze
+from tensorflow.keras.layers import Input, Conv1D, Reshape, LayerNormalization, ReLU, BatchNormalization, Add, AveragePooling1D, Flatten, Dense, GRU, concatenate, Dropout 
 from keras.regularizers import l2
 from keras import optimizers
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow import keras
 import tensorflow as tf
 
-
-
 keras.backend.clear_session()
+#---------------------------------------------------------------------------------------------------------------------
+# Functions
+#---------------------------------------------------------------------------------------------------------------------
 
 def resnet_block(inp, batch_size, num_filter, kernel_sizes=[8,5,3], pool_size=3, pool_stride_size=2):
     def conv_block(inp, batch_size, num_filter, kernel_size):
@@ -89,12 +95,12 @@ def net_blocks(batch_size):
     return [model_time0, model_time1, model_time2], [model_spec0, model_spec1, model_spec2], [inp_time0, inp_time1, inp_time2], [inp_spec0, inp_spec1, inp_spec2]
 
 
-def concat_blocks(inp0, inp1, inp2, resblock, l_name): 
+def concat_blocks(inp0, inp1, inp2, resblock): 
     outp = concatenate([inp0, inp1, inp2], axis=-1)
     
     if resblock==True:
         outp = BatchNormalization()(outp)
-        outp = GRU(384)(outp)
+        outp = GRU(65)(outp)
     outp = BatchNormalization()(outp)
     
     return  outp
@@ -105,151 +111,119 @@ def batch(iterable, n=1):
     for ndx in range(0, l, n):
         yield iterable[ndx:min(ndx + n, l)] 
 
+#---------------------------------------------------------------------------------------------------------------------
+# Initialize paths
+#---------------------------------------------------------------------------------------------------------------------
 
-#path_main = "E:/Uni/Master BMIT/Programmierprojekt/feat/"
-path_main = "C:/Users/vogel/Desktop/Study/Master BMIT/1.Semester/Programmierprojekt/feat_new/"
+# Main path of final preprocessed data
+path_main = "E:/Uni/Master BMIT/Programmierprojekt/feat2/"
+# IDs
 files = os.listdir(path_main+"derivations/dev0")
-#labels = np.array([np.load(path_main+"ground_truth/nn/"+subject, allow_pickle=True) for subject in files], dtype=object)
+### Necessary for using subset ###
+#files = files[:20]
+##################################
 
-
+#---------------------------------------------------------------------------------------------------------------------
+# Initiliaze trainingsparameter
+#---------------------------------------------------------------------------------------------------------------------
+# Initialize kfold
 n_splits = 5
 kfold = KFold(n_splits=n_splits)
 kfold.get_n_splits(files)
-kernel_init = "he_uniform"
 
-batch_size = 128
+# Initialize Hyperparameter
+kernel_init = "he_uniform"
+batch_size = 256
 l2_lambda = 0.001   
 
-
-for train_index, test_index in kfold.split(files): 
+if __name__=="__main__":
+    all_mae_sbp, all_mae_dbp = [], []
+    for nr_fold, (train_index, test_index) in enumerate(kfold.split(files)): 
+        
+        # Separate training, validation and test ids
+        train_index, val_index = train_test_split(train_index, test_size=0.2)
+        train_id = [files[x] for x in train_index]
+        val_id = [files[x] for x in val_index]
+        test_id = [files[x] for x in test_index]
+        
+        # Generators
+        print("Loading Datagenerator")
+        generator_train = DataGenerator(path_main, train_id, batch_size=batch_size)
+        generator_val = DataGenerator(path_main, val_id, batch_size=batch_size)
+        generator_test = DataGenerator(path_main, test_id, batch_size=batch_size, shuffle=False)
     
-    train_index, val_index = train_test_split(train_index, test_size=0.2)
-    train_id = [files[x] for x in train_index]
-    val_id = [files[x] for x in val_index]
+        # Build ResNet blocks
+        print("Creating Model")
+        model_time, model_spec, input_time, input_spec = net_blocks(batch_size)
     
-    # Generators
-    generator_train = DataGenerator(path_main, train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-    generator_val = DataGenerator(path_main, val_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-       
-    models_time, models_spec, inputs_time, inputs_spec = net_blocks(batch_size)   
-    outp_concat_resnet = concat_blocks(models_time[0].output, models_time[1].output, models_time[2].output, True, l_name="reshape_concat_resnet")
-    outp_concat_spec = concat_blocks(models_spec[0].output, models_spec[1].output, models_spec[2].output, False, l_name="reshape_concat_spec")
-    print(outp_concat_resnet.shape)  
-    print(outp_concat_spec.shape) 
-    merged = concatenate([outp_concat_resnet, outp_concat_spec], axis=-1)
-    merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda), kernel_initializer=kernel_init)(merged)
-    merged_outp = Dropout(0.2)(merged_outp)
-    merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda), kernel_initializer=kernel_init)(merged_outp)
-    merged_outp = Dropout(0.2)(merged_outp)
-    merged_outp = Dense(2, activation='relu')(merged_outp)
-
-    final_model = keras.Model(inputs=[inputs_time[0], 
-                                inputs_time[1],
-                                inputs_time[2],
-                                inputs_spec[0],
-                                inputs_spec[1],
-                                inputs_spec[2]],
-                        outputs=merged_outp,
-                        name='Final_Model')
+        
+        # Concatenate all ResNet and all Spetrogram blocks
+        concat_time = concat_blocks(input_time[0], input_time[1], input_time[2], resblock=True)
+        concat_spec = concat_blocks(input_spec[0], input_spec[1], input_spec[2], resblock=False)
+            
     
-    optimizer = optimizers.RMSprop(learning_rate=0.0001)
-    final_model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
-    # print(final_model.summary())
+        # Concatenate ResNet and Spectrogram and build rest of the model
+        concat_spec = Reshape((1, concat_spec.shape[1]*concat_spec.shape[2]))(concat_spec)
+        concat_spec = squeeze(concat_spec, axis=1)
+        merged = concatenate([concat_time, concat_spec])
+        merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda), kernel_initializer=kernel_init)(merged)
+        merged_outp = Dropout(0.2)(merged_outp)
+        merged_outp = Dense(32, activation="relu", kernel_regularizer=l2(l2_lambda), kernel_initializer=kernel_init)(merged_outp)
+        merged_outp = Dropout(0.2)(merged_outp)
+        merged_outp = Dense(2, activation='relu')(merged_outp)
     
-    final_model.fit(generator_train, 
-                    validation_data=generator_val,
-                    epochs=20,
-                    verbose=1)
-#%%
-def myprint(s):
-    with open('modelsummary.txt','a') as f:
-        print(s, file=f)
-
-final_model.summary(print_fn=myprint)
-#%%
-for layer in final_model.layers:
-    if layer.name == "input_time3":
-        print(layer.name, layer.output_shape)
-    elif layer.name == "conv1d_228":
-        print(layer.name, layer.input_shape)
-    else:
-        print(layer.name)
-#%% Show Input Shapes
-print("Input shapes:")
-for i, input_tensor in enumerate(final_model.inputs):
-    print(f"Input {i}: {input_tensor.shape}")
-#%% Show all layer shapes
-for layer in final_model.layers:
-    print(layer.name, layer.input_shape, layer.output_shape)
-#%% Show specfic Input/Output
-for layer in final_model.layers:
-    if layer.name == "input_time3":
-        print(layer.name, layer.output_shape)
-    elif layer.name == "conv1d_843":
-        print(layer.name, layer.input_shape)
-    else:
-        print(layer.name)
-
-
-#%%
-
-
-#for train_index, test_index in kfold.split(files): 
+        final_model = keras.Model(inputs=[input_time[0],
+                                        input_time[1],
+                                        input_time[2],
+                                        input_spec[0],   
+                                        input_spec[1],      
+                                        input_spec[2]],
+                                        outputs=merged_outp,
+                                        name='Final_Model')
+        
+        
+        # Make training
+        optimizer = optimizers.RMSprop(learning_rate=0.0001)
+        
+        es = EarlyStopping(monitor="mae", patience=5)
+        mcp = ModelCheckpoint('best_model'+str(nr_fold)+'.h5', monitor='val_loss', save_best_only=True)
+        final_model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
+        
+        final_model.fit(generator_train, 
+                        validation_data=generator_val,
+                        epochs=1,
+                        verbose=1, 
+                        callbacks=[es, mcp])
+        
+        # Make prediction
+        all_pred = []
+        all_true = []
+        for batch_index in range(generator_test.__len__()):
+            batch_data, batch_true_labels = generator_test.__getitem__(batch_index)
     
-train_index, val_index = train_test_split(train_index, test_size=0.2)
-train_id = [files[x] for x in train_index]
-val_id = [files[x] for x in val_index]
-
-# Generators
-generator_train = DataGenerator(path_main, train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-generator_val = DataGenerator(path_main, val_id, path_main+"ground_truth/nn/", batch_size=batch_size)
- 
-
-
-#%%
+            batch_pred = final_model.predict(batch_data, verbose=0)
+            all_pred.append(batch_pred)
+            sbp_mean = np.mean(batch_true_labels[:,0])
+            dbp_mean = np.mean(batch_true_labels[:,1])
+            all_true.append(np.array([sbp_mean, dbp_mean]))
     
-def data_manual(datagenerator):
-  """Generates a data manual for the given datagenerator."""
-
-  print("Datagenerator parameters:")
-  for key, value in datagenerator.__dict__.items():
-    if not key.startswith("_"):
-      print(f"  {key}: {value}")
-
-  print("\nData manual:")
-  for idx in range(datagenerator.__len__()):
-    x, y = datagenerator.__getitem__(idx)
-    print(f"Batch {idx}:")
-    print(f"  x: {x}")
-    print(f"  y: {y}")
-
-
-if __name__ == "__main__":
-  datagenerator = generator_train
-  data_manual(datagenerator)
-
-
-#%%
-# Set random seed for reproducibility (if you haven't already done it)
-np.random.seed(42)
-tf.random.set_seed(42)
-
-# Create an instance of the data generator
-# Replace the arguments with appropriate values
-data_gen =  DataGenerator(path_main, train_id, path_main+"ground_truth/nn/", batch_size=batch_size)
-# Run the generator multiple times and store the outputs
-num_runs = 5
-outputs = [data_gen.__getitem__(0) for _ in range(num_runs)]
-
-# Compare the first output with the rest to check for consistency
-consistent_output = all(np.array_equal(outputs[0][0], output[0]) and np.array_equal(outputs[0][1], output[1]) for output in outputs[1:])
-
-if consistent_output:
-    print("Generator produces the same output in multiple runs.")
-else:
-    print("Generator produces different outputs.")
-
+        all_pred = np.concatenate(all_pred, axis=0)
+        all_true = np.array(all_true)
+    
+        mae_sbp = mean_absolute_error(all_pred[:,0], all_true[:,0])
+        mae_dbp = mean_absolute_error(all_pred[:,1], all_true[:,1])
+    
+        all_mae_sbp.append(mae_sbp)
+        all_mae_dbp.append(mae_dbp)
+    
+    mae_sbp_mean = np.mean(all_mae_sbp)
+    mae_dbp_mean = np.mean(all_mae_dbp)
+    
+    print("Mean of SBP: ", mae_sbp_mean)
+    print("Mean of DBP: ", mae_dbp_mean)
     
     
+        
+        
+        
     
-

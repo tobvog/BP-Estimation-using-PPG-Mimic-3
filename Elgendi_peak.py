@@ -1,10 +1,9 @@
 import numpy as np
-
- 
+## 
+# @brief This class realizes a peak detection.  
+# @detail For detailed information: https://pubmed.ncbi.nlm.nih.gov/24167546/
+##
 class ElgPeakDetection:
-    '''! Class for peak detection method by Elgendi et al.'''
-    ## @detail For detailed information: https://pubmed.ncbi.nlm.nih.gov/24167546/
-    ##
     def __init__(self, data, w1_size=111, w2_size=667, a=0.02):
         ## 
         # @brief            This constructor initalizes the class.
@@ -26,7 +25,10 @@ class ElgPeakDetection:
 ###############################################################################   
     @staticmethod
     def __squaring(pleth):
-        ## @breif
+        ## 
+        # @brief            This method squares the value of the input samples or set them to zero if they are less than zero.
+        # @param pleth      PPG input data.
+        # @return           Squared data as array.
         ##
         result = []
         for sample in range(0, len(pleth)):
@@ -40,16 +42,20 @@ class ElgPeakDetection:
 ###############################################################################
 ###############################################################################
 ###############################################################################    
-    @staticmethod 
     def __moving_average(self, window):
+        ## 
+        # @brief            This method realize a moving average filter.
+        # @param window     Window size of the filter.
+        # @return           Filtered data and half of window length.
+        ##
         if window == "w1":
             l = int(self._w1/2)
         elif window == "w2":
             l = int(self._w2/2)
         
         result = [] 
-        for sample in range(l+1, len(self.pleth_squared)-l):
-            mean = np.mean(self.pleth_squared[sample-l:sample+l])
+        for sample in range(l+1, len(self._pleth_squared)-l):
+            mean = np.mean(self._pleth_squared[sample-l:sample+l])
             result.append(mean) 
         
         result = np.array(result, dtype=object)
@@ -57,24 +63,37 @@ class ElgPeakDetection:
         return result, l
 ###############################################################################
 ###############################################################################
-############################################################################### 
-    @staticmethod      
-    def __correct_length1(self, ma_peak, l_w1, l_w2):
+###############################################################################       
+    def __correct_length(self, ma_peak, l_w1, l_w2):
+        ## 
+        # @brief            This method unifies the length of the input arrays
+        # @param ma_peak    Moving average filtered peak signal.
+        # @param l_w1       Length of window one.
+        # @param l_w2       Length of window two.
+        # @return           Length corrected data.
+        ##
         size_pleth = len(self.pleth)
         size_ma_peak = len(ma_peak)
         size_abp = len(self.abp)
-        size_square = len(self.pleth_squared)
+        size_square = len(self._pleth_squared)
         
         pleth_mod = self.pleth[l_w2:size_pleth-l_w2]
         ma_peak_mod = ma_peak[l_w2-l_w1:size_ma_peak-l_w2+l_w1]
         abp_mod = self.abp[l_w2-l_w1:size_abp-l_w2+l_w1]
-        square_mod = self.pleth_squared[l_w2:size_square-l_w2]
+        square_mod = self._pleth_squared[l_w2:size_square-l_w2]
         
         return pleth_mod, abp_mod, ma_peak_mod, square_mod    
 ###############################################################################
 ###############################################################################
 ###############################################################################   
-    def boi(self, pleth, ma_peak, ma_beat):
+    def __boi(self, pleth, ma_peak, ma_beat):
+        ## 
+        # @brief            This method extract boxes of interest as the value 0.1 and no boxes of interest as 0.0. 
+        # @param pleth      Input ppg data.
+        # @param ma_peak    Moving average filtered peak signal.
+        # @param ma_beat    Moving average filtered beat signal.
+        # @return           Boxes of interest as array
+        ##
         z = np.mean(pleth)
         result = []
         ma_diff = int((len(ma_peak)-len(ma_beat))/2)
@@ -90,8 +109,13 @@ class ElgPeakDetection:
 ###############################################################################
 ###############################################################################
 ###############################################################################      
-    @staticmethod
-    def boi_onset_offset(self, boi, data):
+    def __boi_onset_offset(self, boi, data):
+        ## 
+        # @brief            This method extract the start and end indices of the boxes of interest 
+        # @param boi        Boxes of interest marked as 0.1 and no bixes of interest marked as 0.0.
+        # @param data       Preprocessed ppg data as input.
+        # @return           Boxes of interest and peaks as array.
+        ##
         def find_nearest(array, value):
             a = list(array)
             try:
@@ -127,17 +151,22 @@ class ElgPeakDetection:
                             stat=True
                          
         return np.array(result, dtype=object), np.array(peaks, dtype=object)
+    
 ###############################################################################
 ###############################################################################
 ###############################################################################   
-    def process(self):        
-        ma_peak, l_w1 = self.__moving_average(self,window="w1")
-        ma_beat, l_w2 = self.__moving_average(self,window="w2")
+    def process(self): 
+        ## 
+        # @brief            Main method of the class to detect peaks.
+        # @return           Indices of boxes of interest and peaks. Also the length corrected ppg and blood pressure signals.
+        ##
+        ma_peak, l_w1 = self.__moving_average(window="w1")
+        ma_beat, l_w2 = self.__moving_average(window="w2")
         
-        pleth_mod, abp_mod, ma_peak_mod, pleth_square_mod = self.__correct_length1(self, ma_peak, l_w1, l_w2)
+        pleth_mod, abp_mod, ma_peak_mod, pleth_square_mod = self.__correct_length(ma_peak, l_w1, l_w2)
         
-        boi = self.boi(pleth_square_mod, ma_peak_mod, ma_beat)
+        boi = self.__boi(pleth_square_mod, ma_peak_mod, ma_beat)
         
-        idx_blocks, idx_peaks = self.boi_onset_offset(self, boi, pleth_square_mod)
+        idx_blocks, idx_peaks = self.__boi_onset_offset(boi, pleth_square_mod)
         
         return idx_blocks, idx_peaks, pleth_mod, abp_mod

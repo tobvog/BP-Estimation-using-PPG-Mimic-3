@@ -69,7 +69,7 @@ class Classical_ML():
 ###############################################################################
 ###############################################################################
 ###############################################################################      
-    def rfregression(self, ids, y, train_index, test_index, path, label, batch_size=64, n_jobs=4):
+    def rfregression(self, ids, y, train_index, test_index, path, label, batch_size=64, n_jobs=1):
         ##
         # @brief This method realizes the RandomForest training of Slapnicar BP Estimation.
         # @param ids            List of subject identification numbers.
@@ -83,8 +83,8 @@ class Classical_ML():
         # @return               Mean absolute error of test data.  
         ##
         
-        nr_batches = int(len(y)/batch_size)
-        clf = RandomForestRegressor(n_estimators=13, verbose=2, n_jobs=3, warm_start=True)
+        nr_batches = int(len(train_index)/batch_size)
+        clf = RandomForestRegressor(n_estimators=13, verbose=2, n_jobs=n_jobs, warm_start=True)
         
         nr_batch = 1
         for mini_batch in self.__batch(iterable=train_index, n=batch_size):
