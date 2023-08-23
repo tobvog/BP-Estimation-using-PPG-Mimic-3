@@ -77,13 +77,9 @@ class DataGenerator(Sequence):
         ## 
         # @brief This method updates the indexes after each epoch.
         ##
-        self._last_idx += self.batch_size
-        if self._last_idx >= len(self._target):
-            self._last_idx = 0
-            self._id_idx += 1
-            if self._id_idx == len(self.list_id):
-                self._id_idx = 0
-            self.__load_data()
+        if self.shuffle==True:
+            np.random.shuffle(self.list_id)
+        self.__load_data()
             
 
     def __data_generation(self):
