@@ -1,4 +1,5 @@
 import numpy as np
+import random
 from tensorflow.keras.utils import Sequence
 ## @brief Datagenerator for 2 equal outputs.  
 ## @details This Datagenerator can be used for big data which would overload the RAM.  
@@ -49,7 +50,8 @@ class DataGenerator(Sequence):
             print("Counting Subjects")
             for nr, sub in enumerate(self.list_id):
                 n_epochs = len(np.load(self.path_main+"derivations/dev0/"+sub))
-                self._nr_batches += int(np.ceil(n_epochs/self.batch_size))
+                self._nr_batches += int(n_epochs/self.batch_size)
+                
         return self._nr_batches
         
 
@@ -69,41 +71,37 @@ class DataGenerator(Sequence):
         x, y = self.__data_generation()
         return [x[0], x[1]], y
 
-
+    
     def on_epoch_end(self):
         ## 
         # @brief This method updates the indexes after each epoch.
         ##
-        self._last_idx += self.batch_size
-        if self._last_idx >= len(self._target):
-            self._last_idx = 0
-            self._id_idx += 1
-            if self._id_idx == len(self.list_id):
-                self._id_idx = 0
-            self.__load_data()
-
+        if self.shuffle==True:
+            random.shuffle(self.list_id)
+        self._last_idx = 0
+        self._id_idx = 0
+        self.__load_data()
 
     def __data_generation(self):
         ##
         # @brief This method generate one batch.
         # @return A batch of data
         ##
+        
+        if len(self._dev0)-self._last_idx < self.batch_size and self._id_idx < len(self.list_id)-1:
+            self._last_idx = 0
+            self._id_idx += 1 
+            self.__load_data()
+    
         x1 = np.zeros((self.batch_size, self.n_sample))
         y = np.zeros((self.batch_size, self.n_classes))
-        
-        for i in range(self._last_idx, len(self._target)):
-        
-            i0 = i-self._last_idx
-            if i==len(self._target)-1:              
-                if self._id_idx==len(self.list_id)-1:
-                    break
-                else:
-                    self._last_idx = 0
-                    self._id_idx += 1 
-                    self.__load_data()
-                    break
+                    
+        for i in range(self._last_idx, len(self._dev0)):
+            if self._id_idx==len(self.list_id):
+                break
             
-            elif i0==self.batch_size-1:
+            i0 = i-self._last_idx                
+            if i0==self.batch_size-1:
                 x1[i0] = self._dev0[i]
                 y[i0] = self._target[i]
                 self._last_idx = i
@@ -115,7 +113,7 @@ class DataGenerator(Sequence):
         x = np.asarray([x1, x1])
         x = np.reshape(x, (2,1,self.batch_size,624))
         y = np.asarray(y)
-
+        
         return x, y
 
 
@@ -127,12 +125,6 @@ class DataGenerator(Sequence):
         self._target = np.load(self.path_main+"ground_truth/nn/"+self.list_id[self._id_idx])
             
 
-
-        
-        
-        
-        
-        
         
         
         
